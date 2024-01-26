@@ -2,7 +2,7 @@ import datetime
 
 import requests
 import concurrent.futures
-
+# 'https://www.nseindia.com/api/corporates-pit?index=equities&from_date=06-05-2018&to_date=06-05-2018'
 
 def get_data_from_web(proxy: dict, url_: str, header_: dict = None) -> dict:
     try:
