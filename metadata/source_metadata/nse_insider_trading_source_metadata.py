@@ -1,6 +1,7 @@
+from metadata.source_metadata.source_http_metadata_interface import SourceHTTPMetadata
 
 
-class NSEIndiaInsiderTradingSourceMetadata:
+class NSEIndiaInsiderTradingSourceMetadata(SourceHTTPMetadata):
 
     def __init__(self):
         self.__base_url: str = 'https://www.nseindia.com/api/corporates-pit?index=equities&'
@@ -13,6 +14,7 @@ class NSEIndiaInsiderTradingSourceMetadata:
         }
 
         self.__cookie_url: str = 'https://www.nseindia.com/companies-listing/corporate-filings-insider-trading'
+        self.__source_system: str = 'nseindia'
 
     def get_base_url(self) -> str:
         return self.__base_url
