@@ -1,5 +1,6 @@
 from pipeline_manager.entity_processor.entity_processor import EntityProcessor
 from lib.lib import datetime, timezone, Path
+from pipeline_manager.error_info.error_logger import get_original_error_message
 from pipeline_manager.xbrl_file_downloader_interface.xbrl_file_downloader_interface import XBRLFileDownloaderABC
 from pipeline_manager.xbrl_processor_interface.xbrl_processor_interface import XBRLProcessorABC
 
@@ -36,13 +37,13 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
             self.__unload_data(raw_data)
             self.__process_data()
         except TypeError as e:
-            raise TypeError("EntityProcessor")
+            raise TypeError(get_original_error_message(e))
         except KeyError as e:
-            raise KeyError("EntityProcessor")
+            raise KeyError(get_original_error_message(e))
         except ValueError as e:
-            raise ValueError("EntityProcessor")
+            raise ValueError(get_original_error_message(e))
         except Exception as e:
-            raise Exception("EntityProcessor")
+            raise Exception(get_original_error_message(e))
 
     def __unload_data(self, raw_data):
         self.__raw_data = raw_data[self.__primary_source_data_key_name]

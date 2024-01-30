@@ -1,4 +1,5 @@
 from lib.lib import BeautifulSoup, element
+from pipeline_manager.error_info.error_logger import get_original_error_message
 from pipeline_manager.xbrl_processor_interface.xbrl_processor_interface import XBRLProcessorABC
 
 
@@ -15,24 +16,42 @@ class XBRLProcessor(XBRLProcessorABC):
         self.__is_transaction_orphan: bool = False
 
     def process_general_xbrl_data(self, contact_person_name: str, tag_name: str, data: str) -> str:
-        self.__contact_person_name = contact_person_name
-        self.__soup = BeautifulSoup(data, features="xml")
-        if self.__contact_person_name != "-":
-            self.__is_transaction_orphan = False
-            return self.__process_xbrl_data_by_contact_person_name(tag_name=tag_name)
-        if self.__is_transaction_orphan is False:
-            return self.__process_xbrl_data_by_other_means(tag_name=tag_name)
+        try:
+            self.__contact_person_name = contact_person_name
+            self.__soup = BeautifulSoup(data, features="xml")
+            if self.__contact_person_name != "-":
+                self.__is_transaction_orphan = False
+                return self.__process_xbrl_data_by_contact_person_name(tag_name=tag_name)
+            if self.__is_transaction_orphan is False:
+                return self.__process_xbrl_data_by_other_means(tag_name=tag_name)
+        except TypeError as e:
+            raise TypeError(get_original_error_message(e))
+        except KeyError as e:
+            raise KeyError(get_original_error_message(e))
+        except ValueError as e:
+            raise ValueError(get_original_error_message(e))
+        except Exception as e:
+            raise Exception(get_original_error_message(e))
 
     def set_orphan_transaction_status_by_other_means(self, type_of_security: str, number_of_securities: str,
                                                      acquisition_disposal: str) -> None:
-        self.__type_of_security = type_of_security
-        self.__number_of_securities = number_of_securities
-        self.__acquisition_disposal = acquisition_disposal
-        if self.__type_of_security == "-" and self.__number_of_securities == "-" and \
-                                                self.__acquisition_disposal == "-":
-            self.__is_transaction_orphan = True
-        else:
-            self.__check_if_transaction_available_in_file_by_other_means()
+        try:
+            self.__type_of_security = type_of_security
+            self.__number_of_securities = number_of_securities
+            self.__acquisition_disposal = acquisition_disposal
+            if self.__type_of_security == "-" and self.__number_of_securities == "-" and \
+                                                    self.__acquisition_disposal == "-":
+                self.__is_transaction_orphan = True
+            else:
+                self.__check_if_transaction_available_in_file_by_other_means()
+        except TypeError as e:
+            raise TypeError(get_original_error_message(e))
+        except KeyError as e:
+            raise KeyError(get_original_error_message(e))
+        except ValueError as e:
+            raise ValueError(get_original_error_message(e))
+        except Exception as e:
+            raise Exception(get_original_error_message(e))
 
     def set_orphan_transaction_status_by_contact_person(self, set_value: bool) -> None:
         self.__is_transaction_orphan = set_value
