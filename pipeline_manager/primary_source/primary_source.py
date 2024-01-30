@@ -1,10 +1,8 @@
-import json
 import time
 from abc import abstractmethod, ABC
-
 from requests import models
-
 from lib.lib import requests, date, timedelta, randint
+from pipeline_manager.error_info.error_logger import get_original_error_message
 
 
 class PrimarySource(ABC):
@@ -38,10 +36,23 @@ class HTTPRequestPrimarySource(PrimarySource):
         self.__cookie_url: str = cookie_url
 
     def get_data(self) -> list[dict]:
-        self.__construct_nse_url()
-        self.__construct_header_with_cookie()
-        response = requests.get(url=self.__nse_url, headers=self.__header)
-        return response.json()["data"]
+        try:
+            self.__construct_nse_url()
+            self.__construct_header_with_cookie()
+            response = requests.get(url=self.__nse_url, headers=self.__header)
+            return response.json()["data"]
+        except requests.HTTPError as e:
+            raise requests.HTTPError(get_original_error_message(e))
+        except requests.ConnectionError as e:
+            raise requests.ConnectionError(get_original_error_message(e))
+        except TypeError as e:
+            raise TypeError(get_original_error_message(e))
+        except KeyError as e:
+            raise KeyError(get_original_error_message(e))
+        except ValueError as e:
+            raise ValueError(get_original_error_message(e))
+        except Exception as e:
+            raise Exception(get_original_error_message(e))
 
     def __construct_nse_url(self) -> None:
         if self.__from_date is None:
@@ -62,21 +73,6 @@ class HTTPRequestPrimarySource(PrimarySource):
         return self.__data_key_name
 
 
-class FilePrimarySource(PrimarySource):
-
-    def __init__(self, data_key_name: str):
-        self.__file_location: str = 'pipeline_manager/primary_source/data.json'
-        self.__data_key_name: str = data_key_name
-
-    def get_data(self) -> list[dict]:
-        with open(self.__file_location) as f:
-            data = json.load(f)
-        return data["data"]
-
-    def get_data_key_name(self) -> str:
-        return self.__data_key_name
-
-
 class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
     __cookie_info: dict = dict()
 
@@ -87,12 +83,24 @@ class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
         self.__data_key_name: str = data_key_name
 
     def get_data(self, xbrl_url: str) -> models.Response:
-        print(f"Downloaded file from -> {xbrl_url}")
-        time_to_sleep = randint(0, 4)
-        time.sleep(time_to_sleep)
-        self.__get_cookie_info()
-        xbrl_resp = requests.get(xbrl_url, headers=self.__header)
-        return xbrl_resp
+        try:
+            time_to_sleep = randint(0, 4)
+            time.sleep(time_to_sleep)
+            self.__get_cookie_info()
+            xbrl_resp = requests.get(xbrl_url, headers=self.__header)
+            return xbrl_resp
+        except requests.HTTPError as e:
+            raise requests.HTTPError(get_original_error_message(e))
+        except requests.ConnectionError as e:
+            raise requests.ConnectionError(get_original_error_message(e))
+        except TypeError as e:
+            raise TypeError(get_original_error_message(e))
+        except KeyError as e:
+            raise KeyError(get_original_error_message(e))
+        except ValueError as e:
+            raise ValueError(get_original_error_message(e))
+        except Exception as e:
+            raise Exception(get_original_error_message(e))
 
     def __get_cookie_info(self):
         if NSEIndiaHTTPXBRLFilePrimarySource.__cookie_info is None:

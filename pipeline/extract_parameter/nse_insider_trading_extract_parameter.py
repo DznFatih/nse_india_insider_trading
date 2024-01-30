@@ -7,7 +7,7 @@ from pipeline_manager.entity_parameter.entity_parameter import EntityParameter
 from pipeline_manager.entity_processor.entity_processor import EntityProcessor
 from pipeline_manager.folder_creator.folder_creator import FolderCreator, XBRLFolderCreator
 from pipeline_manager.primary_source.primary_source import XBRLPrimarySource, NSEIndiaHTTPXBRLFilePrimarySource, \
-    PrimarySource, FilePrimarySource, HTTPRequestPrimarySource
+    PrimarySource, HTTPRequestPrimarySource
 from pipeline_manager.xbrl_file_downloader_interface.xbrl_file_downloader_interface import XBRLFileDownloaderABC
 from pipeline_manager.xbrl_processor_interface.xbrl_processor_interface import XBRLProcessorABC
 
