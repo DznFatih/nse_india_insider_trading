@@ -31,9 +31,18 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         return len(self.__cleaned_data)
 
     def process_data(self, raw_data: dict, xbrl_folder_path: Path) -> None:
-        self.__xbrl_folder_path = xbrl_folder_path
-        self.__unload_data(raw_data)
-        self.__process_data()
+        try:
+            self.__xbrl_folder_path = xbrl_folder_path
+            self.__unload_data(raw_data)
+            self.__process_data()
+        except TypeError as e:
+            raise TypeError("EntityProcessor")
+        except KeyError as e:
+            raise KeyError("EntityProcessor")
+        except ValueError as e:
+            raise ValueError("EntityProcessor")
+        except Exception as e:
+            raise Exception("EntityProcessor")
 
     def __unload_data(self, raw_data):
         self.__raw_data = raw_data[self.__primary_source_data_key_name]

@@ -8,3 +8,4 @@ from bs4 import BeautifulSoup, element
 from requests import models
 from random import randint
 import csv
+import logging

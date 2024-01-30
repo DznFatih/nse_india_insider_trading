@@ -7,7 +7,7 @@ from pipeline_manager.entity_parameter.entity_parameter import EntityParameter
 from pipeline_manager.entity_processor.entity_processor import EntityProcessor
 from pipeline_manager.folder_creator.folder_creator import FolderCreator, XBRLFolderCreator
 from pipeline_manager.primary_source.primary_source import XBRLPrimarySource, NSEIndiaHTTPXBRLFilePrimarySource, \
-    PrimarySource, FilePrimarySource
+    PrimarySource, FilePrimarySource, HTTPRequestPrimarySource
 from pipeline_manager.xbrl_file_downloader_interface.xbrl_file_downloader_interface import XBRLFileDownloaderABC
 from pipeline_manager.xbrl_processor_interface.xbrl_processor_interface import XBRLProcessorABC
 
@@ -16,6 +16,7 @@ class NSEIndiaInsiderTradingExtractParameter(EntityParameter):
 
     def __init__(self, from_date: str = None, to_date: str = None):
         # from_date='01-01-2024', to_date='01-01-2024'
+        # self.__date_format: str = 'DD-MM-YYYY'
         self.__primary_source_data_key_name: str = "insider_trading"
         self.__xbrl_key_name: str = "xbrl_data"
         self.__from_date: str = from_date
@@ -38,13 +39,13 @@ class NSEIndiaInsiderTradingExtractParameter(EntityParameter):
             xbrl_processor=self.__xbrl_processor)
 
     def get_primary_source(self) -> list[PrimarySource]:
-        return [FilePrimarySource(self.__primary_source_data_key_name)]
-            # [HTTPRequestPrimarySource(data_key_name=self.__primary_source_data_key_name,
-            #                              from_date=self.__from_date,
-            #                              to_date=self.__to_date,
-            #                              header=self.__source_metadata.get_header(),
-            #                              base_url=self.__source_metadata.get_base_url(),
-            #                              cookie_url=self.__source_metadata.get_cookie_url())]
+        return [HTTPRequestPrimarySource(data_key_name=self.__primary_source_data_key_name,
+                                         from_date=self.__from_date,
+                                         to_date=self.__to_date,
+                                         header=self.__source_metadata.get_header(),
+                                         base_url=self.__source_metadata.get_base_url(),
+                                         cookie_url=self.__source_metadata.get_cookie_url())]
+        # [FilePrimarySource(self.__primary_source_data_key_name)]
 
     def get_data_processor(self) -> EntityProcessor:
         return self.__data_processor

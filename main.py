@@ -2,7 +2,7 @@
 from pipeline.extract_parameter.nse_insider_trading_extract_parameter import NSEIndiaInsiderTradingExtractParameter
 from pipeline_manager.entity_base.entity_base import EntityBase
 from pipeline_manager.entity_parameter.entity_parameter import EntityParameter
-
+from lib.lib import Path, logging
 
 def entity_base_initiator(entity_parameter: EntityParameter) -> None:
     entity_base = EntityBase(primary_source_list=entity_parameter.primary_source(),
@@ -11,13 +11,47 @@ def entity_base_initiator(entity_parameter: EntityParameter) -> None:
                              folder_creator=entity_parameter.folder_creator())
     entity_base.initiate_pipeline()
 
+def log_info_to_a_file(dict_data: dict) -> None:
+    error_info_loc: Path = Path.cwd() / "error_info"
+    if not Path.is_dir(error_info_loc):
+        Path.mkdir(error_info_loc)
+    file_loc: Path = error_info_loc / "error_info_file.txt"
+    with open(file_loc, 'w') as f:
+        f.write(str(dict_data))
+
+
+def get_original_error_message(exception: Exception) -> str:
+    error_type = type(exception).__name__
+    error_file_location = exception.__traceback__.tb_frame.f_code.co_filename
+    error_file_location_formatted = error_file_location.split("\\")[-1]
+    error_line = exception.__traceback__.tb_lineno
+    error_message = f"{str(exception)}"
+    error_text: str = f"Error Type: {error_type}, " \
+                      f"Error File Location: {error_file_location_formatted}, " \
+                      f"Error Line: {error_line}, " \
+                      f"Error Message: {truncate_error_message(error_message)}"
+    return error_text
+
+
+def truncate_error_message(error_message: str) -> str:
+    return error_message[0:500]  # Config table column errormessage is varchar(1000)
+
 
 if __name__ == "__main__":
-    # from_date='01-01-2024', to_date='01-01-2024'
-    parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date='01-01-2024', to_date='01-01-2024')
-    entity_base_initiator(entity_parameter=parameter)
+    log_info: dict = {}
+    try:
+        # from_date='01-01-2024', to_date='01-01-2024'
+        parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date='30-01-2024', to_date='30-01-2024')
+        entity_base_initiator(entity_parameter=parameter)
+        log_info = {"content": "successful"}
+        log_info_to_a_file(log_info)
 
+    except KeyError as e:
+        log_info_to_a_file(dict_data={"content": "error", "error_message": get_original_error_message(e)})
 
+    except TypeError as e:
+        log_info_to_a_file(dict_data={"content": "error", "error_message": get_original_error_message(e)})
 
-
+    except Exception as e:
+        log_info_to_a_file(dict_data={"content": "error", "error_message": get_original_error_message(e)})
 

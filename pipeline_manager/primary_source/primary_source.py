@@ -1,6 +1,9 @@
 import json
 import time
 from abc import abstractmethod, ABC
+
+from requests import models
+
 from lib.lib import requests, date, timedelta, randint
 
 
@@ -18,11 +21,7 @@ class PrimarySource(ABC):
 class XBRLPrimarySource(ABC):
 
     @abstractmethod
-    def get_data(self, xbrl_url: str) -> dict:
-        pass
-
-    @abstractmethod
-    def get_data_key_name(self) -> str:
+    def get_data(self, xbrl_url: str) -> models.Response:
         pass
 
 
@@ -87,14 +86,13 @@ class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
         self.__base_url: str = base_url
         self.__data_key_name: str = data_key_name
 
-    def get_data(self, xbrl_url: str) -> dict:
+    def get_data(self, xbrl_url: str) -> models.Response:
         print(f"Downloaded file from -> {xbrl_url}")
         time_to_sleep = randint(0, 4)
         time.sleep(time_to_sleep)
         self.__get_cookie_info()
         xbrl_resp = requests.get(xbrl_url, headers=self.__header)
-        xbrl_str = {self.__data_key_name: xbrl_resp}
-        return xbrl_str
+        return xbrl_resp
 
     def __get_cookie_info(self):
         if NSEIndiaHTTPXBRLFilePrimarySource.__cookie_info is None:
@@ -103,6 +101,3 @@ class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
             self.__header["Cookie"] = (f"nsit={NSEIndiaHTTPXBRLFilePrimarySource.__cookie_info['nsit']}; "
                                        f"nseappid={NSEIndiaHTTPXBRLFilePrimarySource.__cookie_info['nseappid']}; "
                                        f"ak_bmsc={NSEIndiaHTTPXBRLFilePrimarySource.__cookie_info['ak_bmsc']}")
-
-    def get_data_key_name(self) -> str:
-        return self.__data_key_name
