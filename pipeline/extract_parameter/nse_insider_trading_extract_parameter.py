@@ -15,8 +15,6 @@ from pipeline_manager.xbrl_processor_interface.xbrl_processor_interface import X
 class NSEIndiaInsiderTradingExtractParameter(EntityParameter):
 
     def __init__(self, from_date: str = None, to_date: str = None):
-        # from_date='01-01-2024', to_date='01-01-2024'
-        # self.__date_format: str = 'DD-MM-YYYY'
         self.__primary_source_data_key_name: str = "insider_trading"
         self.__xbrl_key_name: str = "xbrl_data"
         self.__from_date: str = from_date
@@ -45,7 +43,6 @@ class NSEIndiaInsiderTradingExtractParameter(EntityParameter):
                                          header=self.__source_metadata.get_header(),
                                          base_url=self.__source_metadata.get_base_url(),
                                          cookie_url=self.__source_metadata.get_cookie_url())]
-        # [FilePrimarySource(self.__primary_source_data_key_name)]
 
     def get_data_processor(self) -> EntityProcessor:
         return self.__data_processor
