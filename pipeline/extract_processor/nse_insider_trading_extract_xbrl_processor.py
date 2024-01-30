@@ -52,18 +52,16 @@ class XBRLProcessor(XBRLProcessorABC):
                                                              child_tag_name: str,
                                                              data: str) -> str:
         return_text: str = ""
-
         if not self.__transaction_in_xbrl_file_by_other_means_found:
             return return_text
-
         self.__soup = BeautifulSoup(data, features="xml")
-
         xml_tag_context = self.__soup.find_all(parent_tag_name)
-        if xml_tag_context
-
+        if not xml_tag_context:
+            return return_text
         for tag in xml_tag_context:
             if tag["id"] == self.__change_in_holding_securities_num:
                 return_text = tag.find(child_tag_name).text
+                break
         return return_text
 
     def check_if_transaction_available_in_file_by_other_means(self, type_of_security: str,

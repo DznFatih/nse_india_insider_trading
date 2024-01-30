@@ -44,4 +44,4 @@ class NSEIndiaInsiderTradingTargetMetadata(TargetMetadata):
         "NumberOfUnits",	"ExchangeOnWhichTheTradeWasExecuted",	"TotalValueInAggregate",
         "NameOfTheSignatory",	"DesignationOfSignatory",	"Place",	"DateOfFiling",
         "DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock",
-        "ModeOfAcquisitionOrDisposal",	"GeneralInformationAbstract",	"DataSource",	"InsertDate"]
+        "ModeOfAcquisitionOrDisposal",	"GeneralInformationAbstract",	"SourceSystem",	"InsertDate"]
