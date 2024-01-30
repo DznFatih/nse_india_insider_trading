@@ -1,11 +1,10 @@
-from primary_source.primary_source import XBRLPrimarySource
-from lib.lib import Path, datetime, BeautifulSoup, element
+from lib.lib import BeautifulSoup, element
+from pipeline_manager.xbrl_processor_interface.xbrl_processor_interface import XBRLProcessorABC
 
 
-class XBRLProcessor:
+class XBRLProcessor(XBRLProcessorABC):
 
     def __init__(self) -> None:
-        self.__xbrl_data: dict = dict()
         self.__soup: BeautifulSoup = BeautifulSoup()
         self.__change_in_holding_securities_num: str = ""
         self.__contact_person_name: str = ""
@@ -13,28 +12,66 @@ class XBRLProcessor:
         self.__number_of_securities: str = ""
         self.__acquisition_disposal: str = ""
         self.__change_in_holding_securities_num: str = ""
+        self.__transaction_in_xbrl_file_by_other_means_found: bool = False
 
-    def process_xbrl_data_by_contact_person_name(self, contact_person_name: str, tag_name: str, data) -> str:
+    def process_xbrl_data_by_contact_person_name(self, contact_person_name: str, tag_name: str, data: str) -> str:
+        self.__soup = BeautifulSoup(data, features="xml")
         self.__contact_person_name = contact_person_name
         self.__find_context_ref_by_contact_person()
         return self.__get_value_from_multiple_tag_result_based_on_context_ref(tag_name)
 
-    def process_xbrl_data_by_other_means(self, type_of_security: str, number_of_securities: str,
-                                         acquisition_disposal: str, tag_name: str) -> str:
-        self.__type_of_security = type_of_security
-        self.__number_of_securities = number_of_securities
-        self.__acquisition_disposal = acquisition_disposal
-
-        transaction_in_xbrl_file_found = self.__find_context_ref_by_other_means()
-        if transaction_in_xbrl_file_found:
+    def process_xbrl_data_by_other_means(self, tag_name: str, data: str) -> str:
+        if self.__transaction_in_xbrl_file_by_other_means_found:
+            self.__soup = BeautifulSoup(data, features="xml")
             return self.__get_value_from_multiple_tag_result_based_on_context_ref(tag_name=tag_name)
         return ""
 
-    def process_xbrl_data_to_get_text_from_single_tag(self, tag_to_search: str) -> str:
+    def process_xbrl_data_to_get_text_from_single_tag(self, tag_to_search: str, data: str) -> str:
+        self.__soup = BeautifulSoup(data, features="xml")
         xml_tag = self.__soup.find(tag_to_search)
-        return xml_tag.text
+        if xml_tag:
+            return xml_tag.text
+        return ""
 
-    def __find_context_ref_by_other_means(self) -> bool:
+    def process_xbrl_data_to_get_context_info_by_contact_person_name(self, parent_tag_name: str,
+                                                                     child_tag_name: str, contact_person_name: str,
+                                                                     data: str) -> str:
+        return_text: str = ""
+        self.__soup = BeautifulSoup(data, features="xml")
+        self.__contact_person_name = contact_person_name
+        self.__find_context_ref_by_contact_person()
+        xml_tag_context = self.__soup.find_all(parent_tag_name)
+        if xml_tag_context is None:
+            return return_text
+        for tag in xml_tag_context:
+            if tag["id"] == self.__change_in_holding_securities_num:
+                return_text = tag.find(child_tag_name).text
+        return return_text
+
+    def process_xbrl_data_to_get_context_info_by_other_means(self, parent_tag_name: str,
+                                                             child_tag_name: str,
+                                                             data: str) -> str:
+        return_text: str = ""
+
+        if not self.__transaction_in_xbrl_file_by_other_means_found:
+            return return_text
+
+        self.__soup = BeautifulSoup(data, features="xml")
+
+        xml_tag_context = self.__soup.find_all(parent_tag_name)
+        if xml_tag_context
+
+        for tag in xml_tag_context:
+            if tag["id"] == self.__change_in_holding_securities_num:
+                return_text = tag.find(child_tag_name).text
+        return return_text
+
+    def check_if_transaction_available_in_file_by_other_means(self, type_of_security: str,
+                                                              number_of_securities: str,
+                                                              acquisition_disposal: str) -> None:
+        self.__type_of_security = type_of_security
+        self.__number_of_securities = number_of_securities
+        self.__acquisition_disposal = acquisition_disposal
         xml_tag_type_of_security = self.__find_all_tags('TypeOfInstrument')
         xml_tag_number_of_securities = self.__find_all_tags(
             'SecuritiesAcquiredOrDisposedNumberOfSecurity')
@@ -50,8 +87,8 @@ class XBRLProcessor:
             acquisition_disposal_match: bool = self.__check_for_other_values_if_they_match(xml_tag_acquisition_disposal,
                                                                                            self.__acquisition_disposal)
             if type_of_security_match and acquisition_disposal_match:
-                return True
-            return False
+                self.__transaction_in_xbrl_file_by_other_means_found = True
+            self.__transaction_in_xbrl_file_by_other_means_found = False
 
         elif self.__check_for_match_by_other_means(xml_tag_type_of_security, match_text=self.__type_of_security):
             self.__change_in_holding_securities_num = self.__find_context_ref_by_using_other_means(
@@ -62,8 +99,8 @@ class XBRLProcessor:
             acquisition_disposal_match: bool = self.__check_for_other_values_if_they_match(xml_tag_acquisition_disposal,
                                                                                            self.__acquisition_disposal)
             if number_of_security_match and acquisition_disposal_match:
-                return True
-            return False
+                self.__transaction_in_xbrl_file_by_other_means_found = True
+            self.__transaction_in_xbrl_file_by_other_means_found = False
 
         elif self.__check_for_match_by_other_means(xml_tag_acquisition_disposal, match_text=self.__acquisition_disposal):
             self.__change_in_holding_securities_num = self.__find_context_ref_by_using_other_means(
@@ -74,8 +111,8 @@ class XBRLProcessor:
             type_of_security_match: bool = self.__check_for_other_values_if_they_match(xml_tag_type_of_security,
                                                                                        self.__type_of_security)
             if number_of_security_match and type_of_security_match:
-                return True
-            return False
+                self.__transaction_in_xbrl_file_by_other_means_found = True
+            self.__transaction_in_xbrl_file_by_other_means_found = False
 
     def __check_for_other_values_if_they_match(self, xml_tag: element.ResultSet,
                                                change_in_holding_securities_num: str) -> bool:
@@ -121,3 +158,6 @@ class XBRLProcessor:
     def __find_all_tags(self, tag_name: str) -> element.ResultSet:
         xml_tag = self.__soup.find_all(tag_name)
         return xml_tag
+
+    def is_transaction_in_xbrl_file_by_other_means_found(self) -> bool:
+        return self.__transaction_in_xbrl_file_by_other_means_found

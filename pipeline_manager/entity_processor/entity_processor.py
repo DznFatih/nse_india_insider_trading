@@ -4,7 +4,11 @@ from abc import ABC, abstractmethod
 class EntityProcessor(ABC):
 
     @abstractmethod
-    def get_cleaned_data(self) -> list[tuple]:
+    def get_cleaned_data(self) -> list[dict]:
+        pass
+
+    @abstractmethod
+    def get_orphan_cleaned_data(self) -> list[dict]:
         pass
 
     @abstractmethod
