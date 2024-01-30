@@ -19,7 +19,7 @@ class XBRLProcessor(XBRLProcessorABC):
         try:
             self.__contact_person_name = contact_person_name
             self.__soup = BeautifulSoup(data, features="xml")
-            if self.__contact_person_name != "-":
+            if self.__contact_person_name is not None:
                 self.__is_transaction_orphan = False
                 return self.__process_xbrl_data_by_contact_person_name(tag_name=tag_name)
             if self.__is_transaction_orphan is False:
@@ -39,8 +39,8 @@ class XBRLProcessor(XBRLProcessorABC):
             self.__type_of_security = type_of_security
             self.__number_of_securities = number_of_securities
             self.__acquisition_disposal = acquisition_disposal
-            if self.__type_of_security == "-" and self.__number_of_securities == "-" and \
-                                                    self.__acquisition_disposal == "-":
+            if (self.__type_of_security is None and self.__number_of_securities is None and
+                    self.__acquisition_disposal is None):
                 self.__is_transaction_orphan = True
             else:
                 self.__check_if_transaction_available_in_file_by_other_means()

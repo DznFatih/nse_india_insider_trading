@@ -1,1 +1,1 @@
-{'content': 'error', 'error_message': Exception('Error Type: Exception, Error File Location: nse_insider_trading_extract_processor.py, Error Line: 38, Error Message: Error Type: IndexError, Error File Location: nse_insider_trading_extract_xbrl_downloader.py, Error Line: 18, Error Message: list index out of range')}
+{'content': 'successful'}

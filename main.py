@@ -26,7 +26,7 @@ if __name__ == "__main__":
     log_info: dict = {}
     try:
         # from_date='01-01-2024', to_date='01-01-2024'
-        parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date='30-01-2024', to_date='30-01-2024')
+        parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date='01-12-2015', to_date='31-01-2016')
         entity_base_initiator(entity_parameter=parameter)
         log_info = {"content": "successful"}
         log_info_to_a_file(log_info)

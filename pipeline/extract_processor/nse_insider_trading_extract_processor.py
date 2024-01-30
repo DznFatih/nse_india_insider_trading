@@ -52,9 +52,10 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         for item in self.__raw_data:
             data: dict = dict()
 
-            if item["xbrl"] == "-":
+            if item["xbrl"] is None:
                 data = self.__get_data_without_xbrl_data(item)
-            elif item["acqName"] != "-":
+                self.__xbrl_processor.set_orphan_transaction_status_by_contact_person(set_value=False)
+            elif item["acqName"] is not None:
                 self.__xbrl_processor.set_orphan_transaction_status_by_contact_person(set_value=False)
                 data = self.__get_data_by_available_fields(dict_data=item)
             else:
