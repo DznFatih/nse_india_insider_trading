@@ -1,14 +1,11 @@
 from abc import abstractmethod, ABC
+from lib.lib import Path
 
 
 class XBRLFileDownloaderABC(ABC):
 
     @abstractmethod
-    def create_xbrl_folder(self) -> None:
-        pass
-
-    @abstractmethod
-    def download_xbrl_file_to_local_machine(self, xbrl_url: str) -> None:
+    def download_xbrl_file_to_local_machine(self, xbrl_url: str, xbrl_folder_path: Path) -> None:
         pass
 
     @abstractmethod

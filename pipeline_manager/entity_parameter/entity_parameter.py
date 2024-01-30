@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 
+from pipeline_manager.data_saver.data_saver import DataSaver
 from pipeline_manager.entity_processor.entity_processor import EntityProcessor
-from primary_source.primary_source import PrimarySource
+from pipeline_manager.folder_creator.folder_creator import FolderCreator
+from pipeline_manager.primary_source.primary_source import PrimarySource
 
 
 class EntityParameter(ABC):
@@ -18,4 +20,18 @@ class EntityParameter(ABC):
 
     @abstractmethod
     def get_data_processor(self) -> EntityProcessor:
+        pass
+
+    def folder_creator(self) -> FolderCreator:
+        return self.get_folder_creator()
+
+    @abstractmethod
+    def get_folder_creator(self) -> FolderCreator:
+        pass
+
+    def data_saver(self) -> list[DataSaver]:
+        return self.get_data_saver()
+
+    @abstractmethod
+    def get_data_saver(self) -> list[DataSaver]:
         pass

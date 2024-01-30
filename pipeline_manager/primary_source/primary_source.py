@@ -1,6 +1,7 @@
 import json
+import time
 from abc import abstractmethod, ABC
-from lib.lib import requests, date, timedelta
+from lib.lib import requests, date, timedelta, randint
 
 
 class PrimarySource(ABC):
@@ -65,7 +66,7 @@ class HTTPRequestPrimarySource(PrimarySource):
 class FilePrimarySource(PrimarySource):
 
     def __init__(self, data_key_name: str):
-        self.__file_location: str = 'primary_source/data.json'
+        self.__file_location: str = 'pipeline_manager/primary_source/data.json'
         self.__data_key_name: str = data_key_name
 
     def get_data(self) -> list[dict]:
@@ -78,6 +79,7 @@ class FilePrimarySource(PrimarySource):
 
 
 class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
+    __cookie_info: dict = dict()
 
     def __init__(self, header: dict, cookie_url: str, base_url: str, data_key_name: str):
         self.__header: dict = header
@@ -86,15 +88,21 @@ class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
         self.__data_key_name: str = data_key_name
 
     def get_data(self, xbrl_url: str) -> dict:
+        print(f"Downloaded file from -> {xbrl_url}")
+        time_to_sleep = randint(0, 4)
+        time.sleep(time_to_sleep)
         self.__get_cookie_info()
         xbrl_resp = requests.get(xbrl_url, headers=self.__header)
-        xbrl_str = {self.__data_key_name: xbrl_resp.text}
+        xbrl_str = {self.__data_key_name: xbrl_resp}
         return xbrl_str
 
     def __get_cookie_info(self):
-        response = requests.get(url=self.__cookie_url, headers=self.__header)
-        cookie: dict = response.cookies.get_dict()
-        self.__header["Cookie"] = f"nsit={cookie['nsit']}; nseappid={cookie['nseappid']}; ak_bmsc={cookie['ak_bmsc']}"
+        if NSEIndiaHTTPXBRLFilePrimarySource.__cookie_info is None:
+            response = requests.get(url=self.__cookie_url, headers=self.__header)
+            NSEIndiaHTTPXBRLFilePrimarySource.__cookie_info = response.cookies.get_dict()
+            self.__header["Cookie"] = (f"nsit={NSEIndiaHTTPXBRLFilePrimarySource.__cookie_info['nsit']}; "
+                                       f"nseappid={NSEIndiaHTTPXBRLFilePrimarySource.__cookie_info['nseappid']}; "
+                                       f"ak_bmsc={NSEIndiaHTTPXBRLFilePrimarySource.__cookie_info['ak_bmsc']}")
 
     def get_data_key_name(self) -> str:
         return self.__data_key_name

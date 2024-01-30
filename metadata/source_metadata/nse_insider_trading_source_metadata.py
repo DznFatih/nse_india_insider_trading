@@ -24,3 +24,6 @@ class NSEIndiaInsiderTradingSourceMetadata(SourceHTTPMetadata):
 
     def get_cookie_url(self) -> str:
         return self.__cookie_url
+
+    def get_source_system(self) -> str:
+        return self.__source_system

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-
+from lib.lib import Path
 
 class EntityProcessor(ABC):
 
@@ -16,5 +16,5 @@ class EntityProcessor(ABC):
         pass
 
     @abstractmethod
-    def process_data(self, raw_data: dict) -> None:
+    def process_data(self, raw_data: dict, xbrl_folder_path: Path) -> None:
         pass
