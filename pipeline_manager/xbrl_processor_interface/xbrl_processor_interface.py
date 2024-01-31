@@ -4,7 +4,7 @@ from abc import abstractmethod, ABC
 class XBRLProcessorABC(ABC):
 
     @abstractmethod
-    def process_general_xbrl_data(self, contact_person_name: str, tag_name: str, data: str) -> str:
+    def process_general_xbrl_data(self, tag_name: str) -> str:
         pass
 
     @abstractmethod
@@ -22,10 +22,8 @@ class XBRLProcessorABC(ABC):
         pass
 
     @abstractmethod
-    def set_orphan_transaction_status_by_other_means(self, type_of_security: str, number_of_securities: str,
-                                      acquisition_disposal: str) -> None:
-        pass
-
-    @abstractmethod
-    def set_orphan_transaction_status_by_contact_person(self, set_value: bool) -> None:
+    def set_orphan_transaction_status(self, acqMode: str, secAcq: str, secType: str, secVal: str,
+                                      tdpTransactionType: str,
+                                      befAcqSharesNo: str, afterAcqSharesNo: str, afterAcqSharesPer: str,
+                                      befAcqSharesPer: str, acqName: str, data: str) -> None:
         pass

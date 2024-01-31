@@ -57,7 +57,7 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
                 self.__xbrl_processor.set_orphan_transaction_status_by_contact_person(set_value=False)
                 data = self.__get_data_by_available_fields(dict_data=item)
             else:
-                self.__xbrl_processor.set_orphan_transaction_status_by_other_means(
+                self.__xbrl_processor.set_orphan_transaction_status(
                                                                     type_of_security=item["secType"],
                                                                     number_of_securities=item["secAcq"],
                                                                     acquisition_disposal=item["tdpTransactionType"])
