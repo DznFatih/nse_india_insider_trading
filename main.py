@@ -2,7 +2,7 @@
 from pipeline.extract_parameter.nse_insider_trading_extract_parameter import NSEIndiaInsiderTradingExtractParameter
 from pipeline_manager.entity_base.entity_base import EntityBase
 from pipeline_manager.entity_parameter.entity_parameter import EntityParameter
-from lib.lib import Path, logging
+from lib.lib import Path
 
 
 def entity_base_initiator(entity_parameter: EntityParameter) -> None:
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     log_info: dict = {}
     try:
         # date_format -> 'DD-MM-YYYY'
-        parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date="12-12-2017", to_date="12-12-2017")
+        parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date="02-05-2018", to_date="04-05-2018")
         entity_base_initiator(entity_parameter=parameter)
         log_info = {"content": "successful"}
         log_info_to_a_file(log_info)

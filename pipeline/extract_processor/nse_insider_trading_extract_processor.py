@@ -121,11 +121,16 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
                     contact_person_name=dict_data["acqName"],
                     tag_name="DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems",
                     data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["TypeOfInstrument"] = \
+        table_rows["TypeOfInstrumentOthers"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     contact_person_name=dict_data["acqName"],
-                    tag_name="TypeOfInstrument",
+                    tag_name="TypeOfInstrumentOthers",
                     data=self.__xbrl_downloader.get_xbrl_data())
+        table_rows["TypeOfInstrument"] = \
+            self.__xbrl_processor.process_general_xbrl_data(
+                contact_person_name=dict_data["acqName"],
+                tag_name="TypeOfInstrument",
+                data=self.__xbrl_downloader.get_xbrl_data())
         table_rows["CategoryOfPerson"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     contact_person_name=dict_data["acqName"],
