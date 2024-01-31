@@ -27,6 +27,7 @@ class XBRLProcessor(XBRLProcessorABC):
         try:
             if self.__is_transaction_orphan is True:
                 return ""
+            print("test")
             return self.__process_xbrl_data(tag_name=tag_name)
         except TypeError as e:
             raise TypeError(get_original_error_message(e))
@@ -109,7 +110,6 @@ class XBRLProcessor(XBRLProcessorABC):
             self.__is_transaction_orphan = False
         else:
             self.__is_transaction_orphan = True
-
 
     @staticmethod
     def __handle_text(str_from) -> str:
