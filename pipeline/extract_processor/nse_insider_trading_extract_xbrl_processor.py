@@ -98,6 +98,7 @@ class XBRLProcessor(XBRLProcessorABC):
                                       tdpTransactionType: str,
                                       befAcqSharesNo: str, afterAcqSharesNo: str, afterAcqSharesPer: str,
                                       befAcqSharesPer: str, acqName: str, data: str) -> None:
+        # TODO: Check this one. Here we need to make sure each parameter has value or "-"
         self.__soup = BeautifulSoup(data, features="xml")
         self.__fill_data_to_compare(acqMode, secAcq, secType, secVal, tdpTransactionType,
                                     befAcqSharesNo, afterAcqSharesNo, afterAcqSharesPer,
@@ -112,18 +113,16 @@ class XBRLProcessor(XBRLProcessorABC):
 
     @staticmethod
     def __handle_text(str_from) -> str:
+        # TODO: Check this one. we should make sure parameters have dashes
         if str_from is None or str_from == "" or str_from == " ":
             return "-"
         return str_from
-
-    def set_orphan_transaction_status_by_contact_person(self, set_value: bool) -> None:
-        self.__is_transaction_orphan = set_value
 
     def get_orphan_transaction_status(self) -> bool:
         return self.__is_transaction_orphan
 
     def __process_xbrl_data(self, tag_name: str) -> str:
-        self.__find_context_ref_by_contact_person()
+        # TODO: Check this one. We can straigthly call below function from the main one
         return self.__get_value_from_multiple_tag_result_based_on_context_ref(tag_name)
 
     def process_xbrl_data_to_get_text_from_single_tag(self, tag_to_search: str, data: str) -> str:
@@ -136,12 +135,12 @@ class XBRLProcessor(XBRLProcessorABC):
     def process_xbrl_data_to_get_context_info_by_contact_person_name(self, parent_tag_name: str,
                                                                      child_tag_name: str, contact_person_name: str,
                                                                      data: str) -> str:
+        # TODO: Check this one
         return_text: str = ""
         if self.__is_transaction_orphan:
             return return_text
         self.__soup = BeautifulSoup(data, features="xml")
         self.__contact_person_name = contact_person_name
-        self.__find_context_ref_by_contact_person()
         xml_tag_context = self.__soup.find_all(parent_tag_name)
         if xml_tag_context is None:
             return return_text
@@ -149,25 +148,6 @@ class XBRLProcessor(XBRLProcessorABC):
             if tag["id"] == self.__context_ref:
                 return_text = tag.find(child_tag_name).text
         return return_text
-
-    def __check_for_other_values_if_they_match(self, xml_tag: element.ResultSet,
-                                               match_text: str) -> bool:
-        for tag in xml_tag:
-            if tag["contextRef"] != self.__context_ref:
-                continue
-            if tag.text == match_text:
-                return True
-        return False
-
-    @staticmethod
-    def __check_for_match_by_other_means(xml_tag: element.ResultSet, match_text) -> bool:
-        counter: int = 0
-        for tag in xml_tag:
-            if tag.text == match_text:
-                counter += 1
-        if counter > 1:
-            return False
-        return True
 
     def __get_value_from_multiple_tag_result_based_on_context_ref(self, tag_name: str) -> str:
         return_value: str = ""
