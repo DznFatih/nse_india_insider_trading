@@ -14,7 +14,3 @@ class SourceHTTPMetadata(ABC):
     @abstractmethod
     def get_cookie_url(self) -> str:
         pass
-
-    @abstractmethod
-    def get_source_system(self) -> str:
-        pass

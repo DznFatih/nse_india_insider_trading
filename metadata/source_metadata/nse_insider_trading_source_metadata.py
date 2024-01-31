@@ -14,7 +14,6 @@ class NSEIndiaInsiderTradingSourceMetadata(SourceHTTPMetadata):
         }
 
         self.__cookie_url: str = 'https://www.nseindia.com/companies-listing/corporate-filings-insider-trading'
-        self.__source_system: str = 'nseindia'
 
     def get_base_url(self) -> str:
         return self.__base_url
@@ -24,6 +23,3 @@ class NSEIndiaInsiderTradingSourceMetadata(SourceHTTPMetadata):
 
     def get_cookie_url(self) -> str:
         return self.__cookie_url
-
-    def get_source_system(self) -> str:
-        return self.__source_system

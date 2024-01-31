@@ -32,7 +32,6 @@ class NSEIndiaInsiderTradingExtractParameter(EntityParameter):
         self.__xbrl_processor: XBRLProcessorABC = XBRLProcessor()
         self.__data_processor: EntityProcessor = NSEIndiaInsiderTradingExtractProcessor(
             primary_source_data_key_name=self.__primary_source_data_key_name,
-            source_system=self.__source_metadata.get_source_system(),
             xbrl_downloader=self.__xbrl_downloader,
             xbrl_processor=self.__xbrl_processor)
 

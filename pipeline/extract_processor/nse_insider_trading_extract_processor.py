@@ -7,13 +7,12 @@ from pipeline_manager.xbrl_processor_interface.xbrl_processor_interface import X
 
 class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
 
-    def __init__(self, primary_source_data_key_name: str, source_system: str, xbrl_downloader: XBRLFileDownloaderABC,
+    def __init__(self, primary_source_data_key_name: str, xbrl_downloader: XBRLFileDownloaderABC,
                  xbrl_processor: XBRLProcessorABC):
         self.__primary_source_data_key_name: str = primary_source_data_key_name
         self.__raw_data: list[dict] = list()
         self.__cleaned_data: list[dict] = list()
         self.__orphan_cleaned_data: list[dict] = list()
-        self.__source_system: str = source_system
         self.__insert_date: datetime = datetime.datetime.strptime(
                                                             datetime.datetime.now(timezone.utc).
                                                             strftime("%Y-%m-%d %H:%M:%S"), '%Y-%m-%d %H:%M:%S')
@@ -321,8 +320,7 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
                     contact_person_name=dict_data["acqName"],
                     tag_name="Currency",
                     data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["SourceSystem"] = self.__source_system
-        table_rows["InsertDate"] = self.__insert_date
+        table_rows["DownloadDate"] = self.__insert_date
         return table_rows
 
     @staticmethod
@@ -389,8 +387,7 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         table_rows["ModeOfAcquisitionOrDisposal"] = None
         table_rows["GeneralInformationAbstract"] = None
         table_rows["Currency"] = None
-        table_rows["SourceSystem"] = None
-        table_rows["InsertDate"] = None
+        table_rows["DownloadDate"] = self.__insert_date
         return table_rows
 
     @staticmethod
