@@ -12,6 +12,7 @@ class XBRLProcessor(XBRLProcessorABC):
         self.__data_to_compare: dict = {}
         self.__context_ref_list: list[str] = list()
         self.__distinct_context_refs_with_their_unique_tags_dict: dict = {}
+        self.__is_xbrl_link_missing: bool = False
         self.__tags_to_search = ["ModeOfAcquisitionOrDisposal",
                                  "SecuritiesAcquiredOrDisposedNumberOfSecurity",
                                  "TypeOfInstrument",
@@ -23,10 +24,37 @@ class XBRLProcessor(XBRLProcessorABC):
                                  "SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding",
                                  "NameOfThePerson"]
 
-    def process_general_xbrl_data(self, tag_name: str) -> str:
+    def set_xbrl_link_status(self, set_value: bool) -> None:
+        self.__is_xbrl_link_missing = set_value
+
+    def set_transaction_status_to_default(self) -> None:
+        self.__is_transaction_orphan = False
+        self.__is_xbrl_link_missing = False
+
+    def set_beautiful_soup(self, data: str) -> None:
+        self.__soup = BeautifulSoup(data, features="xml")
+
+    def set_orphan_transaction_status(self, acqMode: str, secAcq: str, secType: str, secVal: str,
+                                      tdpTransactionType: str, befAcqSharesNo: str, afterAcqSharesNo: str,
+                                      afterAcqSharesPer: str, befAcqSharesPer: str, acqName: str) -> None:
+        self.__fill_data_to_compare(acqMode, secAcq, secType, secVal, tdpTransactionType,
+                                    befAcqSharesNo, afterAcqSharesNo, afterAcqSharesPer,
+                                    befAcqSharesPer, acqName)
+        self.__fill_distinct_context_ref()
+        self.__fill_distinct_context_refs_with_their_unique_tags_dict()
+        self.__find_context_ref()
+        if self.__context_ref:
+            self.__is_transaction_orphan = False
+        else:
+            self.__is_transaction_orphan = True
+
+    def get_orphan_transaction_status(self) -> bool:
+        return self.__is_transaction_orphan
+
+    def process_general_xbrl_data(self, tag_name: str) -> str | None:
         try:
-            if self.__is_transaction_orphan is True:
-                return ""
+            if self.__is_searchable_in_xbrl_file is False:
+                return None
             return self.__process_xbrl_data(tag_name=tag_name)
         except TypeError as e:
             raise TypeError(get_original_error_message(e))
@@ -37,20 +65,48 @@ class XBRLProcessor(XBRLProcessorABC):
         except Exception as e:
             raise Exception(get_original_error_message(e))
 
+    def process_xbrl_data_to_get_text_from_single_tag(self, tag_to_search: str) -> str | None:
+        if self.__is_searchable_in_xbrl_file() is False:
+            return None
+        xml_tag = self.__soup.find(tag_to_search)
+        if xml_tag:
+            return xml_tag.text
+        return None
+
+    def process_xbrl_data_to_get_context_info(self, parent_tag_name: str,
+                                              child_tag_name: str) -> str | None:
+        if self.__is_searchable_in_xbrl_file is False:
+            return None
+        xml_tag_context = self.__soup.find_all(parent_tag_name)
+        if xml_tag_context is None:
+            return None
+        for tag in xml_tag_context:
+            if tag["id"] == self.__context_ref:
+                return tag.find(child_tag_name).text
+        return None
+
+    def __is_searchable_in_xbrl_file(self) -> bool:
+        if self.__is_transaction_orphan is True or self.__is_xbrl_link_missing is True:
+            return False
+        return True
+
     def __fill_data_to_compare(self, acqMode: str, secAcq: str, secType: str, secVal: str, tdpTransactionType: str,
                                      befAcqSharesNo: str, afterAcqSharesNo: str, afterAcqSharesPer: str,
                                      befAcqSharesPer: str, acqName: str) -> None:
+        acq_name_with_default_value: str = self.__handle_text(acqName)
+        if acq_name_with_default_value != "N/A":
+            self.__data_to_compare["NameOfThePerson"] = acq_name_with_default_value
+
         self.__data_to_compare = {
-            "ModeOfAcquisitionOrDisposal": acqMode,
-            "SecuritiesAcquiredOrDisposedNumberOfSecurity": secAcq,
-            "TypeOfInstrument": secType,
-            "SecuritiesAcquiredOrDisposedValueOfSecurity": secVal,
-            "SecuritiesAcquiredOrDisposedTransactionType": tdpTransactionType,
-            "SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity": befAcqSharesNo,
-            "SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity": afterAcqSharesNo,
-            "SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding": afterAcqSharesPer,
-            "SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding": befAcqSharesPer,
-            "NameOfThePerson": acqName}
+            "ModeOfAcquisitionOrDisposal": self.__handle_text(acqMode),
+            "SecuritiesAcquiredOrDisposedNumberOfSecurity": self.__handle_text(secAcq),
+            "TypeOfInstrument": self.__handle_text(secType),
+            "SecuritiesAcquiredOrDisposedValueOfSecurity": self.__handle_text(secVal),
+            "SecuritiesAcquiredOrDisposedTransactionType": self.__handle_text(tdpTransactionType),
+            "SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity": self.__handle_text(befAcqSharesNo),
+            "SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity": self.__handle_text(afterAcqSharesNo),
+            "SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding": self.__handle_text(afterAcqSharesPer),
+            "SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding": self.__handle_text(befAcqSharesPer)}
 
     def __fill_distinct_context_ref(self) -> None:
         xml_tag_context_ref = self.__soup.find_all("context")
@@ -72,82 +128,42 @@ class XBRLProcessor(XBRLProcessorABC):
             temp_dict = {}
             for item in value:
                 temp_dict[item.name] = str(item.text)
-            if temp_dict.get("ModeOfAcquisitionOrDisposal", 1) == \
-                    self.__data_to_compare.get("ModeOfAcquisitionOrDisposal", 2) and \
-                    temp_dict.get("SecuritiesAcquiredOrDisposedNumberOfSecurity", 1) == \
-                    self.__data_to_compare.get("SecuritiesAcquiredOrDisposedNumberOfSecurity", 2) and \
-                    temp_dict.get("TypeOfInstrument", 1) == \
-                    self.__data_to_compare.get("TypeOfInstrument", 2) and \
-                    temp_dict.get("SecuritiesAcquiredOrDisposedValueOfSecurity", 1) == \
-                    self.__data_to_compare.get("SecuritiesAcquiredOrDisposedValueOfSecurity", 2) and \
-                    temp_dict.get("SecuritiesAcquiredOrDisposedTransactionType", 1) == \
-                    self.__data_to_compare.get("SecuritiesAcquiredOrDisposedTransactionType", 2) and \
-                    temp_dict.get("SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity", 1) == \
-                    self.__data_to_compare.get("SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity", 2) and \
-                    temp_dict.get("SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity", 1) == \
-                    self.__data_to_compare.get("SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity", 2) and \
-                    temp_dict.get("SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding", 1) == \
-                    self.__data_to_compare.get("SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding", 2) and \
-                    temp_dict.get("SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding", 1) == \
-                    self.__data_to_compare.get("SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding", 2) and \
-                    temp_dict.get("NameOfThePerson", 1) == self.__data_to_compare.get("NameOfThePerson", 1):
+            if self.__is_xbrl_data_match_with_table_data(dict_data=temp_dict) is True:
                 self.__context_ref = key
                 break
 
-    def set_orphan_transaction_status(self, acqMode: str, secAcq: str, secType: str, secVal: str,
-                                      tdpTransactionType: str,
-                                      befAcqSharesNo: str, afterAcqSharesNo: str, afterAcqSharesPer: str,
-                                      befAcqSharesPer: str, acqName: str, data: str) -> None:
-        # TODO: Check this one. Here we need to make sure each parameter has value or "-"
-        self.__soup = BeautifulSoup(data, features="xml")
-        self.__fill_data_to_compare(acqMode, secAcq, secType, secVal, tdpTransactionType,
-                                    befAcqSharesNo, afterAcqSharesNo, afterAcqSharesPer,
-                                    befAcqSharesPer, acqName)
-        self.__fill_distinct_context_ref()
-        self.__fill_distinct_context_refs_with_their_unique_tags_dict()
-        self.__find_context_ref()
-        if self.__context_ref:
-            self.__is_transaction_orphan = False
-        else:
-            self.__is_transaction_orphan = True
+    def __is_xbrl_data_match_with_table_data(self, dict_data: dict) -> bool:
+        if (dict_data.get("ModeOfAcquisitionOrDisposal", 1) ==
+                self.__data_to_compare.get("ModeOfAcquisitionOrDisposal", 2) and
+                dict_data.get("SecuritiesAcquiredOrDisposedNumberOfSecurity", 1) ==
+                self.__data_to_compare.get("SecuritiesAcquiredOrDisposedNumberOfSecurity", 2) and
+                dict_data.get("TypeOfInstrument", 1) ==
+                self.__data_to_compare.get("TypeOfInstrument", 2) and
+                dict_data.get("SecuritiesAcquiredOrDisposedValueOfSecurity", 1) ==
+                self.__data_to_compare.get("SecuritiesAcquiredOrDisposedValueOfSecurity", 2) and
+                dict_data.get("SecuritiesAcquiredOrDisposedTransactionType", 1) ==
+                self.__data_to_compare.get("SecuritiesAcquiredOrDisposedTransactionType", 2) and
+                dict_data.get("SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity", 1) ==
+                self.__data_to_compare.get("SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity", 2) and
+                dict_data.get("SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity", 1) ==
+                self.__data_to_compare.get("SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity", 2) and
+                dict_data.get("SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding", 1) ==
+                self.__data_to_compare.get("SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding", 2) and
+                dict_data.get("SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding", 1) ==
+                self.__data_to_compare.get("SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding", 2) and
+                dict_data.get("NameOfThePerson", 1) == self.__data_to_compare.get("NameOfThePerson", 1)):
+            return True
+        return False
 
     @staticmethod
-    def __handle_text(str_from) -> str:
-        # TODO: Check this one. we should make sure parameters have dashes
+    def __handle_text(str_from: str | None) -> str:
         if str_from is None or str_from == "" or str_from == " ":
-            return "-"
+            return "N/A"
         return str_from
-
-    def get_orphan_transaction_status(self) -> bool:
-        return self.__is_transaction_orphan
 
     def __process_xbrl_data(self, tag_name: str) -> str:
         # TODO: Check this one. We can straigthly call below function from the main one
         return self.__get_value_from_multiple_tag_result_based_on_context_ref(tag_name)
-
-    def process_xbrl_data_to_get_text_from_single_tag(self, tag_to_search: str, data: str) -> str:
-        self.__soup = BeautifulSoup(data, features="xml")
-        xml_tag = self.__soup.find(tag_to_search)
-        if xml_tag:
-            return xml_tag.text
-        return ""
-
-    def process_xbrl_data_to_get_context_info_by_contact_person_name(self, parent_tag_name: str,
-                                                                     child_tag_name: str, contact_person_name: str,
-                                                                     data: str) -> str:
-        # TODO: Check this one
-        return_text: str = ""
-        if self.__is_transaction_orphan:
-            return return_text
-        self.__soup = BeautifulSoup(data, features="xml")
-        self.__contact_person_name = contact_person_name
-        xml_tag_context = self.__soup.find_all(parent_tag_name)
-        if xml_tag_context is None:
-            return return_text
-        for tag in xml_tag_context:
-            if tag["id"] == self.__context_ref:
-                return_text = tag.find(child_tag_name).text
-        return return_text
 
     def __get_value_from_multiple_tag_result_based_on_context_ref(self, tag_name: str) -> str:
         return_value: str = ""

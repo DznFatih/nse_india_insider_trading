@@ -49,357 +49,195 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
 
     def __process_data(self) -> None:
         for item in self.__raw_data:
-            data: dict = dict()
+            self.__xbrl_processor.set_transaction_status_to_default()
             if item["xbrl"] is None or item["xbrl"] == "-":
-                data = self.__get_data_without_xbrl_data(item)
-                self.__xbrl_processor.set_orphan_transaction_status_by_contact_person(set_value=False)
-            elif item["acqName"] is not None and item["acqName"] != "-":
-                self.__xbrl_processor.set_orphan_transaction_status_by_contact_person(set_value=False)
-                data = self.__get_data_by_available_fields(dict_data=item)
+                self.__xbrl_processor.set_xbrl_link_status(True)
+                data: dict = self.__get_data(dict_data=item)
             else:
-                self.__xbrl_processor.set_orphan_transaction_status(
-                                                                    type_of_security=item["secType"],
-                                                                    number_of_securities=item["secAcq"],
-                                                                    acquisition_disposal=item["tdpTransactionType"])
-                data = self.__get_data_by_available_fields(dict_data=item)
+                self.__xbrl_downloader.download_xbrl_file_to_local_machine(xbrl_url=item["xbrl"],
+                                                                           xbrl_folder_path=self.__xbrl_folder_path)
+                self.__xbrl_processor.set_beautiful_soup(data=self.__xbrl_downloader.get_xbrl_data())
+                self.__xbrl_processor.set_orphan_transaction_status(acqMode=item["acqMode"], secAcq=item["secAcq"],
+                                                                    secType=item["secType"], secVal=item["secVal"],
+                                                                    tdpTransactionType=item["tdpTransactionType"],
+                                                                    befAcqSharesNo=item["befAcqSharesNo"],
+                                                                    afterAcqSharesNo=item["afterAcqSharesNo"],
+                                                                    afterAcqSharesPer=item["afterAcqSharesPer"],
+                                                                    befAcqSharesPer=item["befAcqSharesPer"],
+                                                                    acqName=item["acqName"])
+                data: dict = self.__get_data(dict_data=item)
 
             if self.__xbrl_processor.get_orphan_transaction_status():
                 self.__orphan_cleaned_data.append(data)
             else:
                 self.__cleaned_data.append(data)
 
-    def __get_data_by_available_fields(self, dict_data: dict) -> dict:
-        table_rows: dict = self.__get_table_rows(dict_data=dict_data)
-        self.__xbrl_downloader.download_xbrl_file_to_local_machine(xbrl_url=dict_data["xbrl"],
-                                                                   xbrl_folder_path=self.__xbrl_folder_path)
+    def __get_data(self, dict_data: dict) -> dict:
+        data: dict = dict()
 
-        table_rows["Period"] = self.__xbrl_processor.process_xbrl_data_to_get_context_info_by_contact_person_name(
-                contact_person_name=dict_data["acqName"],
+        data["Symbol"] = dict_data["symbol"]
+        data["CompanyName"] = dict_data["company"]
+        data["Regulation"] = dict_data["anex"]
+        data["NameOfTheAcquirerORDisposer"] = dict_data["acqName"]
+        data["TypeOfSecurity"] = dict_data["secType"]
+        data["NoOfSecurities"] = dict_data["secAcq"]
+        data["AcquisitionORDisposal"] = dict_data["tdpTransactionType"]
+        data["BroadcastDateTime"] = dict_data["date"]
+        data["XBRLLink"] = dict_data["xbrl"]
+        data["Period"] = self.__xbrl_processor.process_xbrl_data_to_get_context_info(
                 parent_tag_name="context",
-                child_tag_name="period",
-                data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["ScripCode"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
-                tag_to_search="BSEScripCode",
-                data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["NSESymbol"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
-                tag_to_search="NSESymbol",
-                data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["MSEISymbol"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
-                tag_to_search="MSEISymbol",
-                data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["NameOfTheCompany"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
-                tag_to_search="NameOfTheCompany",
-                data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["WhetherISINAvailable"] = self.__check_if_isin_data_available(
+                child_tag_name="period")
+        data["ScripCode"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
+                tag_to_search="BSEScripCode")
+        data["NSESymbol"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
+                tag_to_search="NSESymbol")
+        data["MSEISymbol"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
+                tag_to_search="MSEISymbol")
+        data["NameOfTheCompany"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
+                tag_to_search="NameOfTheCompany")
+        data["WhetherISINAvailable"] = self.__check_if_isin_data_available(
             self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
-                tag_to_search="ISIN",
-                data=self.__xbrl_downloader.get_xbrl_data()))
-        table_rows["ISINCode"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
-                tag_to_search="ISIN",
-                data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["RevisedFilling"] = self.__xbrl_processor.process_general_xbrl_data(
-                contact_person_name=dict_data["acqName"],
-                tag_name="RevisedFilling",
-                data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract"] = \
+                tag_to_search="ISIN"))
+        data["ISINCode"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
+                tag_to_search="ISIN")
+        data["RevisedFilling"] = self.__xbrl_processor.process_general_xbrl_data(
+                tag_name="RevisedFilling")
+        data["DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTable"] = \
+                    tag_name="DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract")
+        data["DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTable"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTable",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["ChangeInHoldingOfSecuritiesOfPromotersAxis"] = self.__xbrl_processor.process_general_xbrl_data(
-                contact_person_name=dict_data["acqName"],
-                tag_name="ChangeInHoldingOfSecuritiesOfPromotersAxis",
-                data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems"] = \
+                    tag_name="DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTable")
+        data["ChangeInHoldingOfSecuritiesOfPromotersAxis"] = self.__xbrl_processor.process_general_xbrl_data(
+                tag_name="ChangeInHoldingOfSecuritiesOfPromotersAxis")
+        data["DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["TypeOfInstrumentOthers"] = \
+                    tag_name="DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems")
+        data["TypeOfInstrumentOthers"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="TypeOfInstrumentOthers",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["TypeOfInstrument"] = \
+                    tag_name="TypeOfInstrumentOthers")
+        data["TypeOfInstrument"] = \
             self.__xbrl_processor.process_general_xbrl_data(
-                contact_person_name=dict_data["acqName"],
-                tag_name="TypeOfInstrument",
-                data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["CategoryOfPerson"] = \
+                tag_name="TypeOfInstrument")
+        data["CategoryOfPerson"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="CategoryOfPerson",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["NameOfThePerson"] = \
+                    tag_name="CategoryOfPerson")
+        data["NameOfThePerson"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="NameOfThePerson",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["PANNumber"] = \
+                    tag_name="NameOfThePerson")
+        data["PANNumber"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="PANNumber",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["IdentificationNumberOfDirectorOrCompany"] = \
+                    tag_name="PANNumber")
+        data["IdentificationNumberOfDirectorOrCompany"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="IdentificationNumberOfDirectorOrCompany",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["Address"] = \
+                    tag_name="IdentificationNumberOfDirectorOrCompany")
+        data["Address"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="Address",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["ContactNumber"] = \
+                    tag_name="Address")
+        data["ContactNumber"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="ContactNumber",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["SecuritiesHeldPriorToAcquisitionOrDisposalAbstract"] = \
+                    tag_name="ContactNumber")
+        data["SecuritiesHeldPriorToAcquisitionOrDisposalAbstract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalAbstract",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity"] = \
+                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalAbstract")
+        data["SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"] = \
+                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity")
+        data["SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["SecuritiesAcquiredOrDisposedAbstract"] = \
+                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding")
+        data["SecuritiesAcquiredOrDisposedAbstract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="SecuritiesAcquiredOrDisposedAbstract",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["SecuritiesAcquiredOrDisposedNumberOfSecurity"] = \
+                    tag_name="SecuritiesAcquiredOrDisposedAbstract")
+        data["SecuritiesAcquiredOrDisposedNumberOfSecurity"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="SecuritiesAcquiredOrDisposedNumberOfSecurity",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["SecuritiesAcquiredOrDisposedValueOfSecurity"] = \
+                    tag_name="SecuritiesAcquiredOrDisposedNumberOfSecurity")
+        data["SecuritiesAcquiredOrDisposedValueOfSecurity"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="SecuritiesAcquiredOrDisposedValueOfSecurity",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["SecuritiesAcquiredOrDisposedTransactionType"] = \
+                    tag_name="SecuritiesAcquiredOrDisposedValueOfSecurity")
+        data["SecuritiesAcquiredOrDisposedTransactionType"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="SecuritiesAcquiredOrDisposedTransactionType",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["SecuritiesHeldPostAcquistionOrDisposalAbstract"] = \
+                    tag_name="SecuritiesAcquiredOrDisposedTransactionType")
+        data["SecuritiesHeldPostAcquistionOrDisposalAbstract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="SecuritiesHeldPostAcquistionOrDisposalAbstract",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity"] = \
+                    tag_name="SecuritiesHeldPostAcquistionOrDisposalAbstract")
+        data["SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"] = \
+                    tag_name="SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity")
+        data["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract"] = \
+                    tag_name="SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding")
+        data["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate"] = \
+                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract")
+        data["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate"] = \
+                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate")
+        data["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["DateOfIntimationToCompany"] = \
+                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate")
+        data["DateOfIntimationToCompany"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="DateOfIntimationToCompany",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["TypeOfContract"] = \
+                    tag_name="DateOfIntimationToCompany")
+        data["TypeOfContract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="TypeOfContract",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["ContractSpecification"] = \
+                    tag_name="TypeOfContract")
+        data["ContractSpecification"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="ContractSpecification",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["BuyAbstract"] = \
+                    tag_name="ContractSpecification")
+        data["BuyAbstract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="BuyAbstract",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["BuyNotionalValue"] = \
+                    tag_name="BuyAbstract")
+        data["BuyNotionalValue"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="BuyNotionalValue",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["BuyNumberOfUnits"] = \
+                    tag_name="BuyNotionalValue")
+        data["BuyNumberOfUnits"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="BuyNumberOfUnits",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["SellAbstract"] = \
+                    tag_name="BuyNumberOfUnits")
+        data["SellAbstract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="SellAbstract",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["NotionalValue"] = \
+                    tag_name="SellAbstract")
+        data["NotionalValue"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="NotionalValue",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["NumberOfUnits"] = \
+                    tag_name="NotionalValue")
+        data["NumberOfUnits"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="NumberOfUnits",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["ExchangeOnWhichTheTradeWasExecuted"] = \
+                    tag_name="NumberOfUnits")
+        data["ExchangeOnWhichTheTradeWasExecuted"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="ExchangeOnWhichTheTradeWasExecuted",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["TotalValueInAggregate"] = \
+                    tag_name="ExchangeOnWhichTheTradeWasExecuted")
+        data["TotalValueInAggregate"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="ValueInAggregate",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["NameOfTheSignatory"] = \
+                    tag_name="ValueInAggregate")
+        data["NameOfTheSignatory"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="NameOfTheSignatory",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["DesignationOfSignatory"] = \
+                    tag_name="NameOfTheSignatory")
+        data["DesignationOfSignatory"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="DesignationOfSignatory",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["Place"] = \
+                    tag_name="DesignationOfSignatory")
+        data["Place"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="Place",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["DateOfFiling"] = \
+                    tag_name="Place")
+        data["DateOfFiling"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="DateOfFiling",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock"] = \
+                    tag_name="DateOfFiling")
+        data["DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["ModeOfAcquisitionOrDisposal"] = \
+                    tag_name="DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock")
+        data["ModeOfAcquisitionOrDisposal"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="ModeOfAcquisitionOrDisposal",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["GeneralInformationAbstract"] = \
+                    tag_name="ModeOfAcquisitionOrDisposal")
+        data["GeneralInformationAbstract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="GeneralInformationAbstract",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["Currency"] = \
+                    tag_name="GeneralInformationAbstract")
+        data["Currency"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    contact_person_name=dict_data["acqName"],
-                    tag_name="Currency",
-                    data=self.__xbrl_downloader.get_xbrl_data())
-        table_rows["DownloadDate"] = self.__insert_date
-        return table_rows
+                    tag_name="Currency")
+        data["DownloadDate"] = self.__insert_date
+        return data
 
     @staticmethod
     def __check_if_isin_data_available(isin_data: str) -> str:
         if isin_data:
             return "Y"
         return "N"
-
-    def __get_data_without_xbrl_data(self, dict_data: dict) -> dict:
-        table_rows: dict = self.__get_table_rows(dict_data=dict_data)
-        table_rows["Period"] = None
-        table_rows["ScripCode"] = None
-        table_rows["NSESymbol"] = None
-        table_rows["MSEISymbol"] = None
-        table_rows["NameOfTheCompany"] = None
-        table_rows["WhetherISINAvailable"] = None
-        table_rows["ISINCode"] = None
-        table_rows["RevisedFilling"] = None
-        table_rows[
-            "DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract"] = None
-        table_rows[
-            "DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTable"] = None
-        table_rows["ChangeInHoldingOfSecuritiesOfPromotersAxis"] = None
-        table_rows[
-            "DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems"] = None
-        table_rows["TypeOfInstrument"] = None
-        table_rows["TypeOfInstrumentOthers"] = None
-        table_rows["CategoryOfPerson"] = None
-        table_rows["NameOfThePerson"] = None
-        table_rows["PANNumber"] = None
-        table_rows["IdentificationNumberOfDirectorOrCompany"] = None
-        table_rows["Address"] = None
-        table_rows["ContactNumber"] = None
-        table_rows["SecuritiesHeldPriorToAcquisitionOrDisposalAbstract"] = None
-        table_rows["SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity"] = None
-        table_rows["SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"] = None
-        table_rows["SecuritiesAcquiredOrDisposedAbstract"] = None
-        table_rows["SecuritiesAcquiredOrDisposedNumberOfSecurity"] = None
-        table_rows["SecuritiesAcquiredOrDisposedValueOfSecurity"] = None
-        table_rows["SecuritiesAcquiredOrDisposedTransactionType"] = None
-        table_rows["SecuritiesHeldPostAcquistionOrDisposalAbstract"] = None
-        table_rows["SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity"] = None
-        table_rows["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"] = None
-        table_rows["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract"] = None
-        table_rows["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate"] = None
-        table_rows["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate"] = None
-        table_rows["DateOfIntimationToCompany"] = None
-        table_rows["TypeOfContract"] = None
-        table_rows["ContractSpecification"] = None
-        table_rows["BuyAbstract"] = None
-        table_rows["BuyNotionalValue"] = None
-        table_rows["BuyNumberOfUnits"] = None
-        table_rows["SellAbstract"] = None
-        table_rows["NotionalValue"] = None
-        table_rows["NumberOfUnits"] = None
-        table_rows["ExchangeOnWhichTheTradeWasExecuted"] = None
-        table_rows["TotalValueInAggregate"] = None
-        table_rows["NameOfTheSignatory"] = None
-        table_rows["DesignationOfSignatory"] = None
-        table_rows["Place"] = None
-        table_rows["DateOfFiling"] = None
-        table_rows[
-            "DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock"] = None
-        table_rows["ModeOfAcquisitionOrDisposal"] = None
-        table_rows["GeneralInformationAbstract"] = None
-        table_rows["Currency"] = None
-        table_rows["DownloadDate"] = self.__insert_date
-        return table_rows
-
-    @staticmethod
-    def __get_table_rows(dict_data: dict) -> dict:
-        return {
-            "Symbol": dict_data["symbol"],
-            "CompanyName": dict_data["company"],
-            "Regulation": dict_data["anex"],
-            "NameOfTheAcquirerORDisposer": dict_data["acqName"],
-            "TypeOfSecurity": dict_data["secType"],
-            "NoOfSecurities": dict_data["secAcq"],
-            "AcquisitionORDisposal": dict_data["tdpTransactionType"],
-            "BroadcastDateTime": dict_data["date"],
-            "XBRLLink": dict_data["xbrl"]
-        }
