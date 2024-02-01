@@ -57,14 +57,14 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
                 self.__xbrl_downloader.download_xbrl_file_to_local_machine(xbrl_url=item["xbrl"],
                                                                            xbrl_folder_path=self.__xbrl_folder_path)
                 self.__xbrl_processor.set_beautiful_soup(data=self.__xbrl_downloader.get_xbrl_data())
-                self.__xbrl_processor.set_orphan_transaction_status(acqMode=item["acqMode"], secAcq=item["secAcq"],
-                                                                    secType=item["secType"], secVal=item["secVal"],
+                self.__xbrl_processor.set_orphan_transaction_status(acqMode=item["acqMode"], secAcq=str(item["secAcq"]),
+                                                                    secType=item["secType"], secVal=str(item["secVal"]),
                                                                     tdpTransactionType=item["tdpTransactionType"],
-                                                                    befAcqSharesNo=item["befAcqSharesNo"],
-                                                                    afterAcqSharesNo=item["afterAcqSharesNo"],
-                                                                    afterAcqSharesPer=item["afterAcqSharesPer"],
-                                                                    befAcqSharesPer=item["befAcqSharesPer"],
-                                                                    acqName=item["acqName"])
+                                                                    befAcqSharesNo=str(item["befAcqSharesNo"]),
+                                                                    afterAcqSharesNo=str(item["afterAcqSharesNo"]),
+                                                                    afterAcqSharesPer=str(item["afterAcqSharesPer"]),
+                                                                    befAcqSharesPer=str(item["befAcqSharesPer"]),
+                                                                    acqName=str(item["acqName"]))
                 data: dict = self.__get_data(dict_data=item)
 
             if self.__xbrl_processor.get_orphan_transaction_status():
@@ -75,15 +75,35 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
     def __get_data(self, dict_data: dict) -> dict:
         data: dict = dict()
 
-        data["Symbol"] = dict_data["symbol"]
-        data["CompanyName"] = dict_data["company"]
-        data["Regulation"] = dict_data["anex"]
-        data["NameOfTheAcquirerORDisposer"] = dict_data["acqName"]
-        data["TypeOfSecurity"] = dict_data["secType"]
-        data["NoOfSecurities"] = dict_data["secAcq"]
-        data["AcquisitionORDisposal"] = dict_data["tdpTransactionType"]
-        data["BroadcastDateTime"] = dict_data["date"]
-        data["XBRLLink"] = dict_data["xbrl"]
+        data["AcquisitionMode"] = dict_data.get("acqMode")
+        data["AcquisitionfromDate"] = dict_data.get("acqfromDt")
+        data["AcquisitionToDate"] = dict_data.get("acqtoDt")
+        data["AfterAcquisitionSharesNo"] = dict_data.get("afterAcqSharesNo")
+        data["AfterAcquisitionSharesPercentage"] = dict_data.get("afterAcqSharesPer")
+        data["BeforeAcquisitionSharesNo"] = dict_data.get("befAcqSharesNo")
+        data["BeforeAcquisitionSharesPercentage"] = dict_data.get("befAcqSharesPer")
+        data["BuyQuantity"] = dict_data.get("buyQuantity")
+        data["BuyValue"] = dict_data.get("buyValue")
+        data["DerivativeType"] = dict_data.get("derivativeType")
+        data["Did"] = dict_data.get("did")
+        data["Exchange"] = dict_data.get("exchange")
+        data["IntimDate"] = dict_data.get("intimDt")
+        data["PID"] = dict_data.get("pid")
+        data["Remarks"] = dict_data.get("remarks")
+        data["SecuritiesValue"] = dict_data.get("secVal")
+        data["SecuritiesTypePost"] = dict_data.get("securitiesTypePost")
+        data["SellValue"] = dict_data.get("sellValue")
+        data["TDPDerivativeContractType"] = dict_data.get("tdpDerivativeContractType")
+        data["TKDAcqm"] = dict_data.get("tkdAcqm")
+        data["Symbol"] = dict_data.get("symbol")
+        data["CompanyName"] = dict_data.get("company")
+        data["Regulation"] = dict_data.get("anex")
+        data["NameOfTheAcquirerORDisposer"] = dict_data.get("acqName")
+        data["TypeOfSecurity"] = dict_data.get("secType")
+        data["NoOfSecurities"] = dict_data.get("secAcq")
+        data["AcquisitionORDisposal"] = dict_data.get("tdpTransactionType")
+        data["BroadcastDateTime"] = dict_data.get("date")
+        data["XBRLLink"] = dict_data.get("xbrl")
         data["Period"] = self.__xbrl_processor.process_xbrl_data_to_get_context_info(
                 parent_tag_name="context",
                 child_tag_name="period")

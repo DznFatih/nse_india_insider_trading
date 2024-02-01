@@ -1,4 +1,4 @@
-from lib.lib import BeautifulSoup, element
+from lib.lib import BeautifulSoup, element, decimal
 from pipeline_manager.error_info.error_logger import get_original_error_message
 from pipeline_manager.xbrl_processor_interface.xbrl_processor_interface import XBRLProcessorABC
 
@@ -53,7 +53,7 @@ class XBRLProcessor(XBRLProcessorABC):
 
     def process_general_xbrl_data(self, tag_name: str) -> str | None:
         try:
-            if self.__is_searchable_in_xbrl_file is False:
+            if self.__is_searchable_in_xbrl_file() is False:
                 return None
             return self.__process_xbrl_data(tag_name=tag_name)
         except TypeError as e:
@@ -75,7 +75,7 @@ class XBRLProcessor(XBRLProcessorABC):
 
     def process_xbrl_data_to_get_context_info(self, parent_tag_name: str,
                                               child_tag_name: str) -> str | None:
-        if self.__is_searchable_in_xbrl_file is False:
+        if self.__is_searchable_in_xbrl_file() is False:
             return None
         xml_tag_context = self.__soup.find_all(parent_tag_name)
         if xml_tag_context is None:
@@ -96,17 +96,20 @@ class XBRLProcessor(XBRLProcessorABC):
         acq_name_with_default_value: str = self.__handle_text(acqName)
         if acq_name_with_default_value != "N/A":
             self.__data_to_compare["NameOfThePerson"] = acq_name_with_default_value
-
-        self.__data_to_compare = {
-            "ModeOfAcquisitionOrDisposal": self.__handle_text(acqMode),
-            "SecuritiesAcquiredOrDisposedNumberOfSecurity": self.__handle_text(secAcq),
-            "TypeOfInstrument": self.__handle_text(secType),
-            "SecuritiesAcquiredOrDisposedValueOfSecurity": self.__handle_text(secVal),
-            "SecuritiesAcquiredOrDisposedTransactionType": self.__handle_text(tdpTransactionType),
-            "SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity": self.__handle_text(befAcqSharesNo),
-            "SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity": self.__handle_text(afterAcqSharesNo),
-            "SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding": self.__handle_text(afterAcqSharesPer),
-            "SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding": self.__handle_text(befAcqSharesPer)}
+        self.__data_to_compare["ModeOfAcquisitionOrDisposal"] = self.__handle_text(acqMode)
+        self.__data_to_compare["SecuritiesAcquiredOrDisposedNumberOfSecurity"] = self.__handle_text(secAcq)
+        self.__data_to_compare["TypeOfInstrument"] = self.__handle_text(secType)
+        self.__data_to_compare["SecuritiesAcquiredOrDisposedValueOfSecurity"] = self.__handle_text(secVal)
+        self.__data_to_compare["SecuritiesAcquiredOrDisposedTransactionType"] = (
+            self.__handle_text(tdpTransactionType))
+        self.__data_to_compare["SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity"] = (
+            self.__handle_text(befAcqSharesNo))
+        self.__data_to_compare["SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity"] = (
+            self.__handle_text(afterAcqSharesNo))
+        self.__data_to_compare["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"] = (
+            self.__handle_text(self.__normalize_fraction(afterAcqSharesPer)))
+        self.__data_to_compare["SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"] = (
+            self.__handle_text(self.__normalize_fraction(befAcqSharesPer)))
 
     def __fill_distinct_context_ref(self) -> None:
         xml_tag_context_ref = self.__soup.find_all("context")
@@ -133,6 +136,11 @@ class XBRLProcessor(XBRLProcessorABC):
                 break
 
     def __is_xbrl_data_match_with_table_data(self, dict_data: dict) -> bool:
+        dict_data["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"] = (
+            self.__normalize_fraction(dict_data["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"]))
+        dict_data["SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"] = (
+            self.__normalize_fraction(dict_data["SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"]))
+
         if (dict_data.get("ModeOfAcquisitionOrDisposal", 1) ==
                 self.__data_to_compare.get("ModeOfAcquisitionOrDisposal", 2) and
                 dict_data.get("SecuritiesAcquiredOrDisposedNumberOfSecurity", 1) ==
@@ -162,7 +170,6 @@ class XBRLProcessor(XBRLProcessorABC):
         return str_from
 
     def __process_xbrl_data(self, tag_name: str) -> str:
-        # TODO: Check this one. We can straigthly call below function from the main one
         return self.__get_value_from_multiple_tag_result_based_on_context_ref(tag_name)
 
     def __get_value_from_multiple_tag_result_based_on_context_ref(self, tag_name: str) -> str:
@@ -173,20 +180,18 @@ class XBRLProcessor(XBRLProcessorABC):
                 return_value = tag.text
         return return_value
 
-    @staticmethod
-    def __find_context_ref_by_using_other_means(xml_tag: element.ResultSet, match_text: str) -> str:
-        for tag in xml_tag:
-            if tag.text != match_text:
-                continue
-            return tag['contextRef']
-        return ""
-
-    def __find_context_ref_by_contact_person(self) -> None:
-        xml_tag = self.__find_all_tags('NameOfThePerson')
-        for tag in xml_tag:
-            if tag.text == self.__contact_person_name:
-                self.__context_ref = tag['contextRef']
-
     def __find_all_tags(self, tag_name: str) -> element.ResultSet:
         xml_tag = self.__soup.find_all(tag_name)
         return xml_tag
+
+    @staticmethod
+    def __normalize_fraction(str_data: str) -> str | None:
+        if str_data == "-" or str_data is None:
+            return None
+        d = decimal.Decimal(str_data)
+        normalized = d.normalize()
+        sign, digits, exponent = normalized.as_tuple()
+        if exponent > 0:
+            return str(decimal.Decimal((sign, digits + (0,) * exponent, 0)))
+        else:
+            return str(normalized)
