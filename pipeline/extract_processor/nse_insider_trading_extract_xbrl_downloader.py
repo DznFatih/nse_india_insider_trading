@@ -16,6 +16,7 @@ class XBRLFileDownloader(XBRLFileDownloaderABC):
     def download_xbrl_file_to_local_machine(self, xbrl_url: str, xbrl_folder_path: Path) -> None:
         try:
             self.__xbrl_file_name: str = self.__get_file_name_from_xbrl_url(xbrl_url=xbrl_url)
+            print(f"Downloading file -> {self.__xbrl_file_name}")
             if self.__xbrl_file_list.get(self.__xbrl_file_name) is None:
                 self.__xbrl_folder_path = xbrl_folder_path
                 self.__xbrl_data: models.Response = self.__primary_source.get_data(xbrl_url=xbrl_url)

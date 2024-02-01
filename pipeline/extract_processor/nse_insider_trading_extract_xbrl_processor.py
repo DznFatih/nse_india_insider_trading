@@ -55,7 +55,7 @@ class XBRLProcessor(XBRLProcessorABC):
         try:
             if self.__is_searchable_in_xbrl_file() is False:
                 return None
-            return self.__process_xbrl_data(tag_name=tag_name)
+            return self.__get_value_from_multiple_tag_result_based_on_context_ref(tag_name)
         except TypeError as e:
             raise TypeError(get_original_error_message(e))
         except KeyError as e:
@@ -136,10 +136,12 @@ class XBRLProcessor(XBRLProcessorABC):
                 break
 
     def __is_xbrl_data_match_with_table_data(self, dict_data: dict) -> bool:
-        dict_data["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"] = (
-            self.__normalize_fraction(dict_data["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"]))
-        dict_data["SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"] = (
-            self.__normalize_fraction(dict_data["SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"]))
+        if dict_data.get("SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"):
+            dict_data["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"] = (
+                self.__normalize_fraction(dict_data["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"]))
+        if dict_data.get("SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"):
+            dict_data["SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"] = (
+                self.__normalize_fraction(dict_data["SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"]))
 
         if (dict_data.get("ModeOfAcquisitionOrDisposal", 1) ==
                 self.__data_to_compare.get("ModeOfAcquisitionOrDisposal", 2) and
@@ -168,9 +170,6 @@ class XBRLProcessor(XBRLProcessorABC):
         if str_from is None or str_from == "" or str_from == " ":
             return "N/A"
         return str_from
-
-    def __process_xbrl_data(self, tag_name: str) -> str:
-        return self.__get_value_from_multiple_tag_result_based_on_context_ref(tag_name)
 
     def __get_value_from_multiple_tag_result_based_on_context_ref(self, tag_name: str) -> str:
         return_value: str = ""

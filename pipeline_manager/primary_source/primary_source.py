@@ -84,8 +84,8 @@ class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
 
     def get_data(self, xbrl_url: str) -> models.Response:
         try:
-            time_to_sleep = randint(0, 4)
-            time.sleep(time_to_sleep)
+            time_to_sleep = randint(0, 2)
+            #time.sleep(time_to_sleep)
             self.__get_cookie_info()
             xbrl_resp = requests.get(xbrl_url, headers=self.__header)
             return xbrl_resp
