@@ -14,7 +14,7 @@ def entity_base_initiator(entity_parameter: EntityParameter) -> None:
 
 
 def log_info_to_a_file(dict_data: dict) -> None:
-    error_info_loc: Path = Path.cwd() / "error_info"
+    error_info_loc: Path = Path.cwd() / "get_error_details"
     if not Path.is_dir(error_info_loc):
         Path.mkdir(error_info_loc)
     file_loc: Path = error_info_loc / "error_info_file.txt"
@@ -26,16 +26,9 @@ if __name__ == "__main__":
     log_info: dict = {}
     try:
         # date_format -> 'DD-MM-YYYY'
-        parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date="02-05-2018", to_date="04-05-2018")
+        parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date="02-05-2018", to_date="02-05-2018")
         entity_base_initiator(entity_parameter=parameter)
         log_info = {"content": "successful"}
         log_info_to_a_file(log_info)
-
-    except KeyError as e:
-        log_info_to_a_file(dict_data={"content": "error", "error_message": e})
-    except TypeError as e:
-        log_info_to_a_file(dict_data={"content": "error", "error_message": e})
-    except ValueError as e:
-        log_info_to_a_file(dict_data={"content": "error", "error_message": e})
     except Exception as e:
         log_info_to_a_file(dict_data={"content": "error", "error_message": e})

@@ -1,9 +1,9 @@
 from lib.lib import BeautifulSoup, element, decimal
-from pipeline_manager.error_info.error_logger import get_original_error_message
-from pipeline_manager.xbrl_processor_interface.xbrl_processor_interface import XBRLProcessorABC
+from pipeline_manager.get_error_details.get_error_details import get_error_details
+from pipeline_manager.xbrl_processor.xbrl_processor_interface import XBRLProcessorInterface
 
 
-class XBRLProcessor(XBRLProcessorABC):
+class XBRLProcessor(XBRLProcessorInterface):
 
     def __init__(self) -> None:
         self.__soup: BeautifulSoup = BeautifulSoup()
@@ -57,13 +57,13 @@ class XBRLProcessor(XBRLProcessorABC):
                 return None
             return self.__get_value_from_multiple_tag_result_based_on_context_ref(tag_name)
         except TypeError as e:
-            raise TypeError(get_original_error_message(e))
+            raise TypeError(get_error_details(e))
         except KeyError as e:
-            raise KeyError(get_original_error_message(e))
+            raise KeyError(get_error_details(e))
         except ValueError as e:
-            raise ValueError(get_original_error_message(e))
+            raise ValueError(get_error_details(e))
         except Exception as e:
-            raise Exception(get_original_error_message(e))
+            raise Exception(get_error_details(e))
 
     def process_xbrl_data_to_get_text_from_single_tag(self, tag_to_search: str) -> str | None:
         if self.__is_searchable_in_xbrl_file() is False:

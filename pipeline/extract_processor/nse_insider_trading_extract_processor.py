@@ -1,14 +1,14 @@
 from pipeline_manager.entity_processor.entity_processor import EntityProcessor
 from lib.lib import datetime, timezone, Path
-from pipeline_manager.error_info.error_logger import get_original_error_message
-from pipeline_manager.xbrl_file_downloader_interface.xbrl_file_downloader_interface import XBRLFileDownloaderABC
-from pipeline_manager.xbrl_processor_interface.xbrl_processor_interface import XBRLProcessorABC
+from pipeline_manager.get_error_details.get_error_details import get_error_details
+from pipeline_manager.xbrl_downloader.xbrl_file_downloader_interface import XBRLFileDownloaderInterface
+from pipeline_manager.xbrl_processor.xbrl_processor_interface import XBRLProcessorInterface
 
 
 class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
 
-    def __init__(self, primary_source_data_key_name: str, xbrl_downloader: XBRLFileDownloaderABC,
-                 xbrl_processor: XBRLProcessorABC):
+    def __init__(self, primary_source_data_key_name: str, xbrl_downloader: XBRLFileDownloaderInterface,
+                 xbrl_processor: XBRLProcessorInterface):
         self.__primary_source_data_key_name: str = primary_source_data_key_name
         self.__raw_data: list[dict] = list()
         self.__cleaned_data: list[dict] = list()
@@ -16,8 +16,8 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         self.__insert_date: datetime = datetime.datetime.strptime(
                                                             datetime.datetime.now(timezone.utc).
                                                             strftime("%Y-%m-%d %H:%M:%S"), '%Y-%m-%d %H:%M:%S')
-        self.__xbrl_downloader: XBRLFileDownloaderABC = xbrl_downloader
-        self.__xbrl_processor: XBRLProcessorABC = xbrl_processor
+        self.__xbrl_downloader: XBRLFileDownloaderInterface = xbrl_downloader
+        self.__xbrl_processor: XBRLProcessorInterface = xbrl_processor
         self.__is_orphaned_data: bool = False
         self.__xbrl_folder_path: Path = Path()
 
@@ -36,13 +36,13 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
             self.__unload_data(raw_data)
             self.__process_data()
         except TypeError as e:
-            raise TypeError(get_original_error_message(e))
+            raise TypeError(get_error_details(e))
         except KeyError as e:
-            raise KeyError(get_original_error_message(e))
+            raise KeyError(get_error_details(e))
         except ValueError as e:
-            raise ValueError(get_original_error_message(e))
+            raise ValueError(get_error_details(e))
         except Exception as e:
-            raise Exception(get_original_error_message(e))
+            raise Exception(get_error_details(e))
 
     def __unload_data(self, raw_data):
         self.__raw_data = raw_data[self.__primary_source_data_key_name]

@@ -1,10 +1,10 @@
-from pipeline_manager.error_info.error_logger import get_original_error_message
-from pipeline_manager.primary_source.primary_source import XBRLPrimarySource
-from pipeline_manager.xbrl_file_downloader_interface.xbrl_file_downloader_interface import XBRLFileDownloaderABC
+from pipeline_manager.get_error_details.get_error_details import get_error_details
+from pipeline_manager.primary_source.primary_source_interface import XBRLPrimarySource
 from lib.lib import Path, models
+from pipeline_manager.xbrl_downloader.xbrl_file_downloader_interface import XBRLFileDownloaderInterface
 
 
-class XBRLFileDownloader(XBRLFileDownloaderABC):
+class XBRLFileDownloader(XBRLFileDownloaderInterface):
 
     def __init__(self, primary_source: XBRLPrimarySource):
         self.__xbrl_file_name: str = ""
@@ -24,13 +24,13 @@ class XBRLFileDownloader(XBRLFileDownloaderABC):
                 with open(self.__xbrl_folder_path / self.__xbrl_file_name, 'w') as f:
                     f.write(self.__xbrl_data.text)
         except KeyError as e:
-            raise KeyError(get_original_error_message(e))
+            raise KeyError(get_error_details(e))
         except TypeError as e:
-            raise TypeError(get_original_error_message(e))
+            raise TypeError(get_error_details(e))
         except ValueError as e:
-            raise ValueError(get_original_error_message(e))
+            raise ValueError(get_error_details(e))
         except Exception as e:
-            raise Exception(get_original_error_message(e))
+            raise Exception(get_error_details(e))
 
     @staticmethod
     def __get_file_name_from_xbrl_url(xbrl_url: str) -> str:

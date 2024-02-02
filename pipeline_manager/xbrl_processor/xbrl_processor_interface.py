@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABC
 
 
-class XBRLProcessorABC(ABC):
+class XBRLProcessorInterface(ABC):
 
     @abstractmethod
     def process_general_xbrl_data(self, tag_name: str) -> str:

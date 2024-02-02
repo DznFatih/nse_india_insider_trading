@@ -1,12 +1,5 @@
-from abc import ABC, abstractmethod
 from lib.lib import Path, csv
-
-
-class DataSaver(ABC):
-
-    @abstractmethod
-    def save_data(self, folder_path_to_save_data: Path) -> None:
-        pass
+from pipeline_manager.data_saver.data_saver_interface import DataSaver
 
 
 class FileSaver(DataSaver):

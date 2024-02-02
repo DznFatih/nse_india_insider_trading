@@ -1,6 +1,6 @@
 
 
-def get_original_error_message(exception: Exception) -> str:
+def get_error_details(exception: Exception) -> str:
     error_type = type(exception).__name__
     error_file_location = exception.__traceback__.tb_frame.f_code.co_filename
     error_file_location_formatted = error_file_location.split("\\")[-1]
