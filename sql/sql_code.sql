@@ -215,6 +215,20 @@ BEGIN
 	declare @finished_at datetime;
 	declare @run_time_in_seconds int;
 
+
+truncate table dbo.NSEDataBulkInsert;
+
+bulk insert dbo.NSEDataBulkInsert
+from 'C:\Users\dznfa\OneDrive\Desktop\NSETrading\app\XBRL Files\01022024095541\NSE Data.txt'
+with
+(
+	FORMAT = 'CSV',
+	FIRSTROW = 2,
+	FIELDTERMINATOR = '|',
+	MAXERRORS = 10,
+	ROWTERMINATOR = '\n'
+)
+
 drop table if exists dbo.temp_update_table;
 
 Select

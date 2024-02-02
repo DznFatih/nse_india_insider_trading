@@ -20,7 +20,7 @@ class HTTPRequestPrimarySource(PrimarySource):
         try:
             self.__construct_nse_url()
             self.__construct_header_with_cookie()
-            response = requests.get(url=self.__nse_url, headers=self.__header)
+            response = requests.get(url=self.__nse_url, headers=self.__header, timeout=10)
             return response.json()["data"]
         except requests.HTTPError as e:
             raise requests.HTTPError(get_error_details(e))
