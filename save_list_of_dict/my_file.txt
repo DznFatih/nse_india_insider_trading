@@ -1,3 +1,0 @@
-capital|country
-Vilnius|Lithuania
-Ankara|Turkiye
