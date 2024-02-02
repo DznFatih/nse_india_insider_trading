@@ -16,18 +16,23 @@ from pipeline_manager.xbrl_processor.xbrl_processor_interface import XBRLProcess
 
 
 class NSEIndiaInsiderTradingExtractParameter(EntityParameter):
-
+    """ Class for creating necessary objects in order to download, process and save the data
+    from the source. Instead of creating objects in main.py file, we create them in here in one place
+    for the associated entity, i.e. data processing object NSEIndiaInsiderTradingExtractProcessor """
     def __init__(self, from_date: str = None, to_date: str = None):
+        """
+        Initializer function for instance variables.
+        :param from_date: Optional parameter. When skipped, default value of today - 365 will be used
+        :param to_date: Optional parameter. When skipped, default value of today will be used
+        """
         self.__primary_source_data_key_name: str = "insider_trading"
-        self.__xbrl_key_name: str = "xbrl_data"
         self.__from_date: str = from_date
         self.__to_date: str = to_date
         self.__source_metadata: NSEIndiaInsiderTradingSourceMetadata = NSEIndiaInsiderTradingSourceMetadata()
         self.__xbrl_file_primary_source: XBRLPrimarySource = NSEIndiaHTTPXBRLFilePrimarySource(
                 header=self.__source_metadata.get_header(),
                 cookie_url=self.__source_metadata.get_cookie_url(),
-                base_url=self.__source_metadata.get_base_url(),
-                data_key_name=self.__xbrl_key_name)
+                base_url=self.__source_metadata.get_base_url())
         self.__xbrl_downloader: XBRLFileDownloaderInterface = XBRLFileDownloader(
             primary_source=self.__xbrl_file_primary_source)
         self.xbrl_folder_creator: FolderCreator = XBRLFolderCreator()
@@ -39,6 +44,10 @@ class NSEIndiaInsiderTradingExtractParameter(EntityParameter):
             xbrl_processor=self.__xbrl_processor)
 
     def get_primary_source(self) -> list[PrimarySource]:
+        """
+        Returns list of HTTPRequestPrimarySource object which inherits PrimarySource class
+        :return: List of PrimarySource
+        """
         return [HTTPRequestPrimarySource(data_key_name=self.__primary_source_data_key_name,
                                          from_date=self.__from_date,
                                          to_date=self.__to_date,
@@ -47,13 +56,25 @@ class NSEIndiaInsiderTradingExtractParameter(EntityParameter):
                                          cookie_url=self.__source_metadata.get_cookie_url())]
 
     def get_data_processor(self) -> EntityProcessor:
+        """
+        Returns NSEIndiaInsiderTradingExtractProcessor object which inherits EntityProcessor
+        :return: NSEIndiaInsiderTradingExtractProcessor object
+        """
         return self.__data_processor
 
     def get_data_saver(self) -> list[DataSaver]:
+        """
+        Returns list of FileSaver which inherits DataSaver
+        :return: list of FileSave
+        """
         return [FileSaver(data=self.__data_processor.get_cleaned_data(),
                           file_name="NSEData.txt"),
                 FileSaver(data=self.__data_processor.get_orphan_cleaned_data(),
                           file_name="OrphanedNSEData.txt")]
 
     def get_folder_creator(self) -> FolderCreator:
+        """
+        Returns XBRLFolderCreator which inherits FolderCreator
+        :return: XBRLFolderCreator
+        """
         return self.xbrl_folder_creator

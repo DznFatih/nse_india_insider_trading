@@ -1,4 +1,4 @@
-
+""" Built-in and external libraries used in the project """
 
 import requests
 from datetime import date, timedelta, timezone

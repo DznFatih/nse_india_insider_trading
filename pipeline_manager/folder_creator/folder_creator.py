@@ -5,12 +5,20 @@ from pipeline_manager.folder_creator.folder_creator_interface import FolderCreat
 class XBRLFolderCreator(FolderCreator):
 
     def __init__(self):
+        """
+        Creates folder for storing XBRL files and data files and provides access to folder path.
+        It creates a folder called 'XBRL Files' in current working directory
+        """
         self.__xbrl_parent_directory: Path = Path.cwd() / "XBRL Files"
         self.__xbrl_sub_directory: Path = Path()
         self.__xbrl_file_loc: Path = Path()
         self.__current_date_time = datetime.datetime.now()
 
     def create_xbrl_folder(self) -> None:
+        """
+        Creates a folder for storing XBRL files
+        :return:
+        """
         # Check if "XBRL Files" parent directory exist. If not, create one
         if not Path.is_dir(self.__xbrl_parent_directory):
             Path.mkdir(self.__xbrl_parent_directory)
@@ -20,4 +28,8 @@ class XBRLFolderCreator(FolderCreator):
             Path.mkdir(self.__xbrl_sub_directory)
 
     def get_folder_path(self) -> Path:
+        """
+        Public method to provide folder path for store XBRL files
+        :return: returns Path object
+        """
         return self.__xbrl_sub_directory

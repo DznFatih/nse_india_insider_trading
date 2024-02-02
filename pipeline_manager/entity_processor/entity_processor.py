@@ -3,7 +3,9 @@ from lib.lib import Path
 
 
 class EntityProcessor(ABC):
-
+    """
+    Entity processor interface
+    """
     @abstractmethod
     def get_cleaned_data(self) -> list[dict]:
         pass

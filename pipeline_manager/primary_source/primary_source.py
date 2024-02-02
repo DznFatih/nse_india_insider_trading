@@ -8,6 +8,17 @@ class HTTPRequestPrimarySource(PrimarySource):
 
     def __init__(self, data_key_name: str, base_url: str, cookie_url: str,
                  header: dict, from_date: str = None, to_date: str = None) -> None:
+        """
+        Downloads data from internet. It connects to data source using requests library and passes header
+        information to it. If it does get from_date and to_date information, it defaults them to today - 365 days
+        and today's date, respectively.
+        :param data_key_name: Used to serialize raw data returned from data source
+        :param base_url: URL to connect
+        :param cookie_url: Cookie url to download cookie information
+        :param header: header information to pass through data source's wall
+        :param from_date: date info to filter data source
+        :param to_date:  date info to filter data source
+        """
         self.__date_format: str = 'DD-MM-YYYY'
         self.__from_date: str = from_date
         self.__to_date: str = to_date
@@ -17,6 +28,10 @@ class HTTPRequestPrimarySource(PrimarySource):
         self.__cookie_url: str = cookie_url
 
     def get_data(self) -> list[dict]:
+        """
+        It downloads coockie information from internet, updates header info with cookie and downloads data
+        :return:
+        """
         try:
             self.__construct_nse_url()
             self.__construct_header_with_cookie()
@@ -57,11 +72,10 @@ class HTTPRequestPrimarySource(PrimarySource):
 class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
     __cookie_info: dict = dict()
 
-    def __init__(self, header: dict, cookie_url: str, base_url: str, data_key_name: str):
+    def __init__(self, header: dict, cookie_url: str, base_url: str):
         self.__header: dict = header
         self.__cookie_url: str = cookie_url
         self.__base_url: str = base_url
-        self.__data_key_name: str = data_key_name
 
     def get_data(self, xbrl_url: str) -> models.Response:
         try:
