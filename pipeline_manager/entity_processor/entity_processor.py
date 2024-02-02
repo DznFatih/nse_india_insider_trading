@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from lib.lib import Path
 
+
 class EntityProcessor(ABC):
 
     @abstractmethod

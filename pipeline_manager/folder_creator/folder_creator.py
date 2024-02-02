@@ -1,17 +1,5 @@
-from abc import ABC, abstractmethod
-
 from lib.lib import Path, datetime
-
-
-class FolderCreator(ABC):
-
-    @abstractmethod
-    def create_xbrl_folder(self) -> None:
-        pass
-
-    @abstractmethod
-    def get_folder_path(self) -> Path:
-        pass
+from pipeline_manager.folder_creator.folder_creator_interface import FolderCreator
 
 
 class XBRLFolderCreator(FolderCreator):

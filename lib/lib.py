@@ -9,3 +9,4 @@ from requests import models
 from random import randint
 import csv
 import logging
+import decimal

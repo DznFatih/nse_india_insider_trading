@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 
-from pipeline_manager.data_saver.data_saver import DataSaver
+from pipeline_manager.data_saver.data_saver_interface import DataSaver
 from pipeline_manager.entity_processor.entity_processor import EntityProcessor
-from pipeline_manager.folder_creator.folder_creator import FolderCreator
-from pipeline_manager.primary_source.primary_source import PrimarySource
+from pipeline_manager.folder_creator.folder_creator_interface import FolderCreator
+from pipeline_manager.primary_source.primary_source_interface import PrimarySource
 
 
 class EntityParameter(ABC):

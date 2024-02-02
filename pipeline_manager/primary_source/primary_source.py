@@ -1,26 +1,7 @@
-import time
-from abc import abstractmethod, ABC
 from requests import models
-from lib.lib import requests, date, timedelta, randint
-from pipeline_manager.error_info.error_logger import get_original_error_message
-
-
-class PrimarySource(ABC):
-
-    @abstractmethod
-    def get_data(self) -> list[dict]:
-        pass
-
-    @abstractmethod
-    def get_data_key_name(self) -> str:
-        pass
-
-
-class XBRLPrimarySource(ABC):
-
-    @abstractmethod
-    def get_data(self, xbrl_url: str) -> models.Response:
-        pass
+from lib.lib import requests, date, timedelta
+from pipeline_manager.get_error_details.get_error_details import get_error_details
+from pipeline_manager.primary_source.primary_source_interface import PrimarySource, XBRLPrimarySource
 
 
 class HTTPRequestPrimarySource(PrimarySource):
@@ -39,20 +20,20 @@ class HTTPRequestPrimarySource(PrimarySource):
         try:
             self.__construct_nse_url()
             self.__construct_header_with_cookie()
-            response = requests.get(url=self.__nse_url, headers=self.__header)
+            response = requests.get(url=self.__nse_url, headers=self.__header, timeout=10)
             return response.json()["data"]
         except requests.HTTPError as e:
-            raise requests.HTTPError(get_original_error_message(e))
+            raise requests.HTTPError(get_error_details(e))
         except requests.ConnectionError as e:
-            raise requests.ConnectionError(get_original_error_message(e))
+            raise requests.ConnectionError(get_error_details(e))
         except TypeError as e:
-            raise TypeError(get_original_error_message(e))
+            raise TypeError(get_error_details(e))
         except KeyError as e:
-            raise KeyError(get_original_error_message(e))
+            raise KeyError(get_error_details(e))
         except ValueError as e:
-            raise ValueError(get_original_error_message(e))
+            raise ValueError(get_error_details(e))
         except Exception as e:
-            raise Exception(get_original_error_message(e))
+            raise Exception(get_error_details(e))
 
     def __construct_nse_url(self) -> None:
         if self.__from_date is None:
@@ -84,23 +65,21 @@ class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
 
     def get_data(self, xbrl_url: str) -> models.Response:
         try:
-            time_to_sleep = randint(0, 4)
-            time.sleep(time_to_sleep)
             self.__get_cookie_info()
             xbrl_resp = requests.get(xbrl_url, headers=self.__header)
             return xbrl_resp
         except requests.HTTPError as e:
-            raise requests.HTTPError(get_original_error_message(e))
+            raise requests.HTTPError(get_error_details(e))
         except requests.ConnectionError as e:
-            raise requests.ConnectionError(get_original_error_message(e))
+            raise requests.ConnectionError(get_error_details(e))
         except TypeError as e:
-            raise TypeError(get_original_error_message(e))
+            raise TypeError(get_error_details(e))
         except KeyError as e:
-            raise KeyError(get_original_error_message(e))
+            raise KeyError(get_error_details(e))
         except ValueError as e:
-            raise ValueError(get_original_error_message(e))
+            raise ValueError(get_error_details(e))
         except Exception as e:
-            raise Exception(get_original_error_message(e))
+            raise Exception(get_error_details(e))
 
     def __get_cookie_info(self):
         if NSEIndiaHTTPXBRLFilePrimarySource.__cookie_info is None:
