@@ -29,7 +29,7 @@ class HTTPRequestPrimarySource(PrimarySource):
 
     def get_data(self) -> list[dict]:
         """
-        It downloads coockie information from internet, updates header info with cookie and downloads data
+        It downloads cookie information from internet, updates header info with cookie and downloads data
         :return:
         """
         try:
