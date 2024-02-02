@@ -1,13 +1,10 @@
 
 
---CREATE DATABASE
-create database dwh;
-
-
-create table dwh.dbo.Statisticts
+drop table if exists dbo.Statisticts
+create table dbo.Statisticts
  (
 	ID int IDENTITY(1,1) NOT NULL,
- 	OperationName VARCHAR(100) NOT NULL, -- Insert or Update
+ 	OperationName VARCHAR(100) NOT NULL,
  	ReadRowCount int NOT NULL,
 	UpdatedDataRowCount int NOT NULL,
 	InsertRowCount int NOT NULL,
@@ -200,6 +197,61 @@ create table dbo.NSEDataCleaned (
 --========================================================================================================================================================================
 
 
+--------------------------------------------------------------  dbo.SP_NSEDataBulkInsert
+
+create or alter procedure dbo.SP_NSEDataBulkInsert
+AS
+BEGIN
+	declare @operation_name varchar(100) = 'Extract'
+	declare @read_row_count int;
+	declare @updated_data_row_count int = 0;
+	declare @insert_row_count int;
+	declare @started_at datetime = (Select GETDATE())
+	declare @finished_at datetime;
+	declare @run_time_in_seconds int;
+	DECLARE @ErrorMessage NVARCHAR(4000);
+
+	truncate table dbo.NSEDataBulkInsert;
+BEGIN TRY
+	BEGIN TRANSACTION
+
+	bulk insert dbo.NSEDataBulkInsert
+	from 'C:\Users\dznfa\OneDrive\Desktop\NSETrading\app\XBRL Files\02022024051418\NSEData.txt'
+	with
+	(
+		FORMAT = 'CSV',
+		FIRSTROW = 2,
+		FIELDTERMINATOR = '|',
+		MAXERRORS = 10,
+		ROWTERMINATOR = '\n'
+	)
+
+	COMMIT Transaction;
+	Set @read_row_count = (Select count(1) from dbo.NSEDataBulkInsert)
+	Set @insert_row_count = (Select count(1) from dbo.NSEDataBulkInsert)
+	set @run_time_in_seconds = DATEDIFF(SECOND, @finished_at, @started_at)
+	set @finished_at = (Select GETDATE())
+	exec dbo.SP_Statistics_Table @operation_name, @read_row_count, @updated_data_row_count, @insert_row_count, @started_at, @finished_at, @run_time_in_seconds
+	COMMIT Transaction;
+
+END TRY
+BEGIN CATCH
+	SELECT @ErrorMessage = ERROR_MESSAGE()
+	PRINT @ErrorMessage
+    IF @@TRANCOUNT > 0
+        ROLLBACK TRANSACTION;
+END CATCH;
+end
+
+
+
+--========================================================================================================================================================================
+--========================================================================================================================================================================
+--========================================================================================================================================================================
+
+
+--------------------------------------------------------------  dbo.SP_NSEDataCleaned
+
 
 
 create or alter procedure dbo.SP_NSEDataCleaned
@@ -207,27 +259,14 @@ create or alter procedure dbo.SP_NSEDataCleaned
 AS
 
 BEGIN
-
+	declare @operation_name varchar(100) = 'Clean'
 	declare @read_row_count int;
 	declare @updated_data_row_count int;
 	declare @insert_row_count int;
 	declare @started_at datetime = (Select GETDATE())
 	declare @finished_at datetime;
 	declare @run_time_in_seconds int;
-
-
-truncate table dbo.NSEDataBulkInsert;
-
-bulk insert dbo.NSEDataBulkInsert
-from 'C:\Users\dznfa\OneDrive\Desktop\NSETrading\app\XBRL Files\01022024095541\NSE Data.txt'
-with
-(
-	FORMAT = 'CSV',
-	FIRSTROW = 2,
-	FIELDTERMINATOR = '|',
-	MAXERRORS = 10,
-	ROWTERMINATOR = '\n'
-)
+	DECLARE @ErrorMessage NVARCHAR(4000);
 
 drop table if exists dbo.temp_update_table;
 
@@ -529,21 +568,25 @@ BEGIN TRY
 		where RowID_PK not in (Select RowID_PK from dbo.NSEDataCleaned);
 
 	drop table if exists dbo.temp_update_table;
-	COMMIT Transaction;
 
 	set @finished_at = (Select GETDATE())
 
 	set @run_time_in_seconds = DATEDIFF(SECOND, @finished_at, @started_at)
 
-	exec dbo.SP_Statistics_Table @read_row_count, @updated_data_row_count, @insert_row_count, @started_at, @finished_at, @run_time_in_seconds
+	exec dbo.SP_Statistics_Table @operation_name, @read_row_count, @updated_data_row_count, @insert_row_count, @started_at, @finished_at, @run_time_in_seconds
+	COMMIT Transaction;
 END TRY
 
 BEGIN CATCH
+	SELECT @ErrorMessage = ERROR_MESSAGE()
+	PRINT @ErrorMessage
     IF @@TRANCOUNT > 0
 		drop table if exists dbo.temp_update_table;
         ROLLBACK TRANSACTION;
 END CATCH;
 END
+
+
 
 --========================================================================================================================================================================
 --========================================================================================================================================================================
@@ -553,7 +596,8 @@ END
 ----------------------------------------------------------- Statistics Procedure
 
 
-CREATE  or ALTER PROCEDURE dbo.SP_Statistics_Table @read_row_count int,
+CREATE  or ALTER PROCEDURE dbo.SP_Statistics_Table @operation_name varchar(100),
+											@read_row_count int,
 											@updated_data_row_count int,
 											@insert_row_count int,
 											@started_at datetime,
@@ -563,14 +607,15 @@ AS
 BEGIN
 
 	Insert into dbo.Statisticts
-		(ReadRowCount,
+		(OperationName,
+		ReadRowCount,
 		UpdatedDataRowCount,
 		InsertRowCount,
 		StartedAt,
 		FinishedAt,
 		RunTimeInSeconds)
 	values
-		(@read_row_count, @updated_data_row_count, @insert_row_count, @started_at, @finished_at, @run_time_in_seconds)
+		(@operation_name, @read_row_count, @updated_data_row_count, @insert_row_count, @started_at, @finished_at, @run_time_in_seconds)
 END
 
 
