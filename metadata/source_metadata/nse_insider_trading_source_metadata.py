@@ -2,7 +2,8 @@ from metadata.source_metadata.source_http_metadata_interface import SourceHTTPMe
 
 
 class NSEIndiaInsiderTradingSourceMetadata(SourceHTTPMetadata):
-
+    """ Class to hold hard coded metadata for NSEIndia.com website. This is purely a data class
+    and does not have any operations. """
     def __init__(self):
         self.__base_url: str = 'https://www.nseindia.com/api/corporates-pit?index=equities&'
         self.__header = {

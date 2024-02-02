@@ -6,9 +6,24 @@ from pipeline_manager.xbrl_processor.xbrl_processor_interface import XBRLProcess
 
 
 class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
-
+    """
+    Data processor for NSEIndiaInsiderTrading website. This class is only responsible for processing
+    the data. It does not care where or how it gets it, the data needs to be passed in to its function process_data.
+    It also asks XBRLFileDownloaderInterface to download XBRL documents from internet and asks XBRLProcessorInterface
+    to process XBRL document data.
+    """
     def __init__(self, primary_source_data_key_name: str, xbrl_downloader: XBRLFileDownloaderInterface,
                  xbrl_processor: XBRLProcessorInterface):
+        """
+        Collects data and splits them into two files: cleaned_data and orphan_cleaned_data.
+        cleaned_data has transaction data from the table visible in webpage and data from XBRL file.
+        orphan_cleaned_data has transaction data from the table and it has XBRL file attached to but the transaction
+        was not identified in the xbrl file. Therefore, these transactions will have a link to their XBRL file but
+        will not have any data from it.
+        :param primary_source_data_key_name: Used to deserialize data received in process_data function
+        :param xbrl_downloader: Used to download XBRL file to current working directory
+        :param xbrl_processor: Used to process data in XBRL file
+        """
         self.__primary_source_data_key_name: str = primary_source_data_key_name
         self.__raw_data: list[dict] = list()
         self.__cleaned_data: list[dict] = list()
@@ -22,15 +37,30 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         self.__xbrl_folder_path: Path = Path()
 
     def get_cleaned_data(self) -> list[dict]:
+        """
+        Returns clean data
+        :return: Returns clean data
+        """
         return self.__cleaned_data
 
     def get_orphan_cleaned_data(self) -> list[dict]:
+        """
+        Orphan data means transaction has XBRL file but it was not identified in the file by any
+        means.
+        :return:
+        """
         return self.__orphan_cleaned_data
 
     def get_cleaned_row_count(self) -> int:
         return len(self.__cleaned_data)
 
     def process_data(self, raw_data: dict, xbrl_folder_path: Path) -> None:
+        """
+        Process data received as dictionary and makes call to other operations
+        :param raw_data: serialized raw data
+        :param xbrl_folder_path: path to folder created for storing XBRL file
+        :return:
+        """
         try:
             self.__xbrl_folder_path = xbrl_folder_path
             self.__unload_data(raw_data)
@@ -44,10 +74,35 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         except Exception as e:
             raise Exception(get_error_details(e))
 
-    def __unload_data(self, raw_data):
+    def __unload_data(self, raw_data: dict) -> None:
+        """
+        Deserializes raw_data using data key name
+        :param raw_data: dictionary data
+        :return:
+        """
         self.__raw_data = raw_data[self.__primary_source_data_key_name]
 
     def __process_data(self) -> None:
+        """
+        Loops through raw data, downloads XBRL files, stores files in the working directory, and processes data from
+        xbrl files. Transactions made before May, 3rd 2018 does not have XBRL files so data pulled before that day
+        will not have any XBRL files. Logic in this method step by step as follows:
+
+        1- Set transaction status to default which is False. XBRL file processor object checks to identify transactions
+           in XBRL file. If it does not find, it sets is_orphaned_transaction to False otherwise to True.
+           IF it is True, then it means we were able to identify transaction in XBRL file.
+        2- It checks if the transaction has link to XBRL file. If it does not have the link,
+           it will set __is_xbrl_link_missing to True so that processor will not search anything
+        3- If there is a link to XBRL file, then
+
+            3.1 It will download XBRL file,
+            3.2 it will ask XBRL file processor to identify currently processing transaction
+            3.3 If transaction found in the file, then it will set is_orphan_transaction status to false
+            3.4 It will make a call to its method __get_data to start processing current transaction
+        4-  It will check if current transaction is orphan. If it is, it will store it to __orphan_cleaned_data,
+            otherwise it will store to __cleaned_data
+        :return:
+        """
         for item in self.__raw_data:
             self.__xbrl_processor.set_transaction_status_to_default()
             if item["xbrl"] is None or item["xbrl"] == "-":
@@ -73,6 +128,11 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
                 self.__cleaned_data.append(data)
 
     def __get_data(self, dict_data: dict) -> dict:
+        """
+        Processes data passed through its argument dict_data
+        :param dict_data: dictionary data that holds current transaction
+        :return: returns currently processed transaction data
+        """
         data: dict = dict()
 
         data["AcquisitionMode"] = dict_data.get("acqMode")
@@ -258,6 +318,11 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
 
     @staticmethod
     def __check_if_isin_data_available(isin_data: str) -> str:
+        """
+        checks to see if isin_data has any value
+        :param isin_data: string data
+        :return: Returns string
+        """
         if isin_data:
             return "Y"
         return "N"

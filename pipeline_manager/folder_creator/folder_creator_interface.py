@@ -3,7 +3,9 @@ from pathlib import Path
 
 
 class FolderCreator(ABC):
-
+    """
+    Folder creator interface
+    """
     @abstractmethod
     def create_xbrl_folder(self) -> None:
         pass

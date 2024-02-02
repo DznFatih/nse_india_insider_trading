@@ -7,7 +7,9 @@ from pipeline_manager.primary_source.primary_source_interface import PrimarySour
 
 
 class EntityParameter(ABC):
-
+    """
+    Entity parameter interface
+    """
     def primary_source(self) -> list[PrimarySource]:
         return self.get_primary_source()
 

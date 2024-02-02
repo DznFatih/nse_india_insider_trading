@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 class SourceHTTPMetadata(ABC):
 
+    """ Interface for Source metadata classes."""
     @abstractmethod
     def get_base_url(self) -> str:
         pass
