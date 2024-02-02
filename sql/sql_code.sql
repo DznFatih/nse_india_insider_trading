@@ -14,7 +14,7 @@ create table dbo.Statisticts
  );
 
 
-drop table if exists dwh.dbo.NSEDataBulkInsert
+drop table if exists dbo.NSEDataBulkInsert
 CREATE TABLE dbo.NSEDataBulkInsert(
 	AcquisitionMode	nvarchar(200)	Null,
 	AcquisitionfromDate	nvarchar(200)	Null,
@@ -101,7 +101,7 @@ CREATE TABLE dbo.NSEDataBulkInsert(
 )
 
 
-drop table if exists dwh.dbo.NSEDataCleaned
+drop table if exists dbo.NSEDataCleaned
 create table dbo.NSEDataCleaned (
     ID int IDENTITY(1, 1) NOT NULL,
     RowID_PK varchar(500) NOT NULL,
@@ -197,9 +197,41 @@ create table dbo.NSEDataCleaned (
 --========================================================================================================================================================================
 
 
+----------------------------------------------------------- Statistics Procedure
+
+
+CREATE  or ALTER PROCEDURE dbo.SP_Statistics_Table @operation_name varchar(100),
+											@read_row_count int,
+											@updated_data_row_count int,
+											@insert_row_count int,
+											@started_at datetime,
+											@finished_at datetime,
+											@run_time_in_seconds int
+AS
+BEGIN
+
+	Insert into dbo.Statisticts
+		(OperationName,
+		ReadRowCount,
+		UpdatedDataRowCount,
+		InsertRowCount,
+		StartedAt,
+		FinishedAt,
+		RunTimeInSeconds)
+	values
+		(@operation_name, @read_row_count, @updated_data_row_count, @insert_row_count, @started_at, @finished_at, @run_time_in_seconds)
+END
+
+
+
+--========================================================================================================================================================================
+--========================================================================================================================================================================
+--========================================================================================================================================================================
+
+
 --------------------------------------------------------------  dbo.SP_NSEDataBulkInsert
 
-create or alter procedure dbo.SP_NSEDataBulkInsert
+create or alter procedure dbo.SP_NSEDataBulkInsert @file_path varchar(100)
 AS
 BEGIN
 	declare @operation_name varchar(100) = 'Extract'
@@ -211,26 +243,31 @@ BEGIN
 	declare @run_time_in_seconds int;
 	DECLARE @ErrorMessage NVARCHAR(4000);
 
+	Declare @sql nvarchar(500) = 'bulk insert dbo.NSEDataBulkInsert
+								  from ''' +  @file_path + '''
+								  with
+								  (
+										FORMAT = ''CSV'',
+										FIRSTROW = 2,
+										FIELDTERMINATOR = ''|'',
+										MAXERRORS = 10,
+										ROWTERMINATOR = ''\n''
+								   )'
+
 	truncate table dbo.NSEDataBulkInsert;
+
+
 BEGIN TRY
 	BEGIN TRANSACTION
+	exec(@sql)
 
-	bulk insert dbo.NSEDataBulkInsert
-	from 'C:\Users\dznfa\OneDrive\Desktop\NSETrading\app\XBRL Files\02022024051418\NSEData.txt'
-	with
-	(
-		FORMAT = 'CSV',
-		FIRSTROW = 2,
-		FIELDTERMINATOR = '|',
-		MAXERRORS = 10,
-		ROWTERMINATOR = '\n'
-	)
 
-	COMMIT Transaction;
 	Set @read_row_count = (Select count(1) from dbo.NSEDataBulkInsert)
 	Set @insert_row_count = (Select count(1) from dbo.NSEDataBulkInsert)
-	set @run_time_in_seconds = DATEDIFF(SECOND, @finished_at, @started_at)
 	set @finished_at = (Select GETDATE())
+	set @run_time_in_seconds = DATEDIFF(SECOND, @finished_at, @started_at)
+
+
 	exec dbo.SP_Statistics_Table @operation_name, @read_row_count, @updated_data_row_count, @insert_row_count, @started_at, @finished_at, @run_time_in_seconds
 	COMMIT Transaction;
 
@@ -242,6 +279,7 @@ BEGIN CATCH
         ROLLBACK TRANSACTION;
 END CATCH;
 end
+
 
 
 
@@ -585,38 +623,3 @@ BEGIN CATCH
         ROLLBACK TRANSACTION;
 END CATCH;
 END
-
-
-
---========================================================================================================================================================================
---========================================================================================================================================================================
---========================================================================================================================================================================
-
-
------------------------------------------------------------ Statistics Procedure
-
-
-CREATE  or ALTER PROCEDURE dbo.SP_Statistics_Table @operation_name varchar(100),
-											@read_row_count int,
-											@updated_data_row_count int,
-											@insert_row_count int,
-											@started_at datetime,
-											@finished_at datetime,
-											@run_time_in_seconds int
-AS
-BEGIN
-
-	Insert into dbo.Statisticts
-		(OperationName,
-		ReadRowCount,
-		UpdatedDataRowCount,
-		InsertRowCount,
-		StartedAt,
-		FinishedAt,
-		RunTimeInSeconds)
-	values
-		(@operation_name, @read_row_count, @updated_data_row_count, @insert_row_count, @started_at, @finished_at, @run_time_in_seconds)
-END
-
-
-
