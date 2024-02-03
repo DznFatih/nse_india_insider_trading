@@ -29,8 +29,10 @@ class HTTPRequestPrimarySource(PrimarySource):
 
     def get_data(self) -> list[dict]:
         """
-        It downloads cookie information from internet, updates header info with cookie and downloads data
-        :return:
+        It updates header info with cookie downloaded from source, and downloads data.
+        It checks if date information was provided by  user. If it was provided, then it
+        uses that info. Otherwise, it uses default values
+        :return: Returns list of dictionary
         """
         try:
             self.__construct_nse_url()
@@ -51,6 +53,10 @@ class HTTPRequestPrimarySource(PrimarySource):
             raise Exception(get_error_details(e))
 
     def __construct_nse_url(self) -> None:
+        """
+        Constructs target url with date info.
+        :return:
+        """
         if self.__from_date is None:
             to_date: date = date.today()
             from_date: date = to_date - timedelta(days=365)
@@ -61,11 +67,19 @@ class HTTPRequestPrimarySource(PrimarySource):
             self.__nse_url = self.__nse_url + f"from_date={self.__from_date}&to_date={self.__to_date}"
 
     def __construct_header_with_cookie(self) -> None:
+        """
+        Downloads cookie information from target url and adds that info to header dictionary
+        :return:
+        """
         response = requests.get(url=self.__cookie_url, headers=self.__header)
         cookie: dict = response.cookies.get_dict()
         self.__header["Cookie"] = f"nsit={cookie['nsit']}; nseappid={cookie['nseappid']}; ak_bmsc={cookie['ak_bmsc']}"
 
     def get_data_key_name(self) -> str:
+        """
+        Used to deserialize data
+        :return: string
+        """
         return self.__data_key_name
 
 
@@ -73,6 +87,14 @@ class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
     __cookie_info: dict = dict()
 
     def __init__(self, header: dict, cookie_url: str, base_url: str):
+        """
+        Downloads xbrl files. An XBRL file can have multiple transactions inside and its url can be
+        There can be the same XBRL file url associated with transaction. Therefore, we store all
+        downloaded file information in memory and check if the target url was already
+        :param header:
+        :param cookie_url:
+        :param base_url:
+        """
         self.__header: dict = header
         self.__cookie_url: str = cookie_url
         self.__base_url: str = base_url
