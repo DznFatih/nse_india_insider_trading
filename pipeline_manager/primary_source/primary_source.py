@@ -88,18 +88,22 @@ class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
 
     def __init__(self, header: dict, cookie_url: str, base_url: str):
         """
-        Downloads xbrl files. An XBRL file can have multiple transactions inside and its url can be
-        There can be the same XBRL file url associated with transaction. Therefore, we store all
-        downloaded file information in memory and check if the target url was already
-        :param header:
-        :param cookie_url:
-        :param base_url:
+        Downloads XBRL files from target link. Each XBRL file link is placed inside a table and they have
+        the transactional information from their respective row.
+        :param header: Header data in the form of dictionary
+        :param cookie_url: URL to download cookie info from target website
+        :param base_url: Target URL
         """
         self.__header: dict = header
         self.__cookie_url: str = cookie_url
         self.__base_url: str = base_url
 
     def get_data(self, xbrl_url: str) -> models.Response:
+        """
+        Downloads XBRL file from internet
+        :param xbrl_url: target url
+        :return: Returns response from the website
+        """
         try:
             self.__get_cookie_info()
             xbrl_resp = requests.get(xbrl_url, headers=self.__header)
@@ -117,7 +121,11 @@ class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
         except Exception as e:
             raise Exception(get_error_details(e))
 
-    def __get_cookie_info(self):
+    def __get_cookie_info(self) -> None:
+        """
+        Gets the cookie information from target website
+        :return:
+        """
         if NSEIndiaHTTPXBRLFilePrimarySource.__cookie_info is None:
             response = requests.get(url=self.__cookie_url, headers=self.__header)
             NSEIndiaHTTPXBRLFilePrimarySource.__cookie_info = response.cookies.get_dict()

@@ -6,6 +6,14 @@ from pipeline_manager.xbrl_processor.xbrl_processor_interface import XBRLProcess
 class XBRLProcessor(XBRLProcessorInterface):
 
     def __init__(self) -> None:
+        """
+        Processes data inside the XBRL file. These files can hold multiple transactions associated to the same
+        company. In order to make sure to capture correct single transaction of the row of the company and avoid
+        duplicates, it uses combination of fields from table to match with file's data. Once it finds the matching
+        transaction it captures contextRef (i.e. contextRef="ChangeInHoldingOfSecurities001I") which holds the single
+        transaction details for the company. The fields used to match data between XBRL file and table row visible
+        in the website are listed in __tags_to_search instance variable.
+        """
         self.__soup: BeautifulSoup = BeautifulSoup()
         self.__context_ref: str = ""
         self.__is_transaction_orphan: bool = False
@@ -25,18 +33,59 @@ class XBRLProcessor(XBRLProcessorInterface):
                                  "NameOfThePerson"]
 
     def set_xbrl_link_status(self, set_value: bool) -> None:
+        """
+        Allows caller to set xbrl link missing status. If set to False, this object wont take any further action in
+        process_general_xbrl_data method
+        :param set_value: Boolean values
+        :return:
+        """
         self.__is_xbrl_link_missing = set_value
 
     def set_transaction_status_to_default(self) -> None:
+        """
+        Allows to set instance variables __is_transaction_orphan and __is_xbrl_link_missing to False
+        for the next run
+        :return:
+        """
         self.__is_transaction_orphan = False
         self.__is_xbrl_link_missing = False
 
     def set_beautiful_soup(self, data: str) -> None:
+        """
+        Passes string data into BeautifulSoup class to create __soup object
+        :param data:
+        :return:
+        """
         self.__soup = BeautifulSoup(data, features="xml")
 
     def set_orphan_transaction_status(self, acqMode: str, secAcq: str, secType: str, secVal: str,
                                       tdpTransactionType: str, befAcqSharesNo: str, afterAcqSharesNo: str,
                                       afterAcqSharesPer: str, befAcqSharesPer: str, acqName: str) -> None:
+        """
+        Loops through XBRL data to find associated transaction from the row of the table. If it is found, it sets
+        __is_transaction_orphan value to False, otherwise it sets it to True.
+
+        Orphan transactions are transactions that have XBRL file but there was no way of identifying them in that
+        file because it was not possible to match transaction information from table row with
+        transaction in XBRL file. If data matches, and it finds transaction in XBRL file then they are considered as
+        not orphaned transactions
+
+        Not all arguments below will be visible in table in the NSEIndia.com website. When data is downloaded
+        using Requests library, the response returns much more information including information from visible table
+        on the website.
+
+        :param acqMode: ModeOfAcquisitionOrDisposal in XBRL File
+        :param secAcq: SecuritiesAcquiredOrDisposedNumberOfSecurity in XBRL File
+        :param secType: TypeOfInstrument in XBRL File
+        :param secVal: SecuritiesAcquiredOrDisposedValueOfSecurity in XBRL File
+        :param tdpTransactionType: SecuritiesAcquiredOrDisposedTransactionType in XBRL File
+        :param befAcqSharesNo: SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity in XBRL File
+        :param afterAcqSharesNo: SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity in XBRL File
+        :param afterAcqSharesPer: SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding in XBRL File
+        :param befAcqSharesPer: SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding in XBRL File
+        :param acqName: NameOfThePerson in XBRL File
+        :return:
+        """
         self.__fill_data_to_compare(acqMode, secAcq, secType, secVal, tdpTransactionType,
                                     befAcqSharesNo, afterAcqSharesNo, afterAcqSharesPer,
                                     befAcqSharesPer, acqName)
@@ -49,9 +98,18 @@ class XBRLProcessor(XBRLProcessorInterface):
             self.__is_transaction_orphan = True
 
     def get_orphan_transaction_status(self) -> bool:
+        """
+        Returns the status of orphan transaction status for the current transaction
+        :return: Boolean
+        """
         return self.__is_transaction_orphan
 
     def process_general_xbrl_data(self, tag_name: str) -> str | None:
+        """
+        Returns the text value from tag of the XBRL file
+        :param tag_name: Tag name to search in XBRL file
+        :return: string if value exists, None if it's not
+        """
         try:
             if self.__is_searchable_in_xbrl_file() is False:
                 return None
@@ -66,6 +124,12 @@ class XBRLProcessor(XBRLProcessorInterface):
             raise Exception(get_error_details(e))
 
     def process_xbrl_data_to_get_text_from_single_tag(self, tag_to_search: str) -> str | None:
+        """
+        Returns value from tags that are unique in XBRL file meaning they are exist only once in the file and
+        there is not any duplicate of the same tag (i.e. CompanyName)
+        :param tag_to_search: Tag name
+        :return: string if value exists, None if it's not
+        """
         if self.__is_searchable_in_xbrl_file() is False:
             return None
         xml_tag = self.__soup.find(tag_to_search)
@@ -75,6 +139,12 @@ class XBRLProcessor(XBRLProcessorInterface):
 
     def process_xbrl_data_to_get_context_info(self, parent_tag_name: str,
                                               child_tag_name: str) -> str | None:
+        """
+        Returns context info text from XBRL file (i.e. <xbrli:context id="ChangeInHoldingOfSecurities001I"> <xbrli:period>)
+        :param parent_tag_name: Parent tag that has sub tags
+        :param child_tag_name: Child tags under parent
+        :return: string or None
+        """
         if self.__is_searchable_in_xbrl_file() is False:
             return None
         xml_tag_context = self.__soup.find_all(parent_tag_name)
@@ -86,6 +156,10 @@ class XBRLProcessor(XBRLProcessorInterface):
         return None
 
     def __is_searchable_in_xbrl_file(self) -> bool:
+        """
+        Checks to see if it should process XBRL file
+        :return: boolean
+        """
         if self.__is_transaction_orphan is True or self.__is_xbrl_link_missing is True:
             return False
         return True
@@ -93,6 +167,20 @@ class XBRLProcessor(XBRLProcessorInterface):
     def __fill_data_to_compare(self, acqMode: str, secAcq: str, secType: str, secVal: str, tdpTransactionType: str,
                                      befAcqSharesNo: str, afterAcqSharesNo: str, afterAcqSharesPer: str,
                                      befAcqSharesPer: str, acqName: str) -> None:
+        """
+        Stores transaction details for comparing against XBRL file
+        :param acqMode: ModeOfAcquisitionOrDisposal in XBRL File
+        :param secAcq: SecuritiesAcquiredOrDisposedNumberOfSecurity in XBRL File
+        :param secType: TypeOfInstrument in XBRL File
+        :param secVal: SecuritiesAcquiredOrDisposedValueOfSecurity in XBRL File
+        :param tdpTransactionType: SecuritiesAcquiredOrDisposedTransactionType in XBRL File
+        :param befAcqSharesNo: SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity in XBRL File
+        :param afterAcqSharesNo: SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity in XBRL File
+        :param afterAcqSharesPer: SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding in XBRL File
+        :param befAcqSharesPer: SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding in XBRL File
+        :param acqName: NameOfThePerson in XBRL File
+        :return:
+        """
         acq_name_with_default_value: str = self.__handle_text(acqName)
         if acq_name_with_default_value != "N/A":
             self.__data_to_compare["NameOfThePerson"] = acq_name_with_default_value
@@ -112,6 +200,10 @@ class XBRLProcessor(XBRLProcessorInterface):
             self.__handle_text(self.__normalize_fraction(befAcqSharesPer)))
 
     def __fill_distinct_context_ref(self) -> None:
+        """
+
+        :return:
+        """
         xml_tag_context_ref = self.__soup.find_all("context")
         for tag in xml_tag_context_ref:
             self.__context_ref_list.append(tag["id"])
