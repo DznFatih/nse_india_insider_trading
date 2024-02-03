@@ -201,7 +201,7 @@ class XBRLProcessor(XBRLProcessorInterface):
 
     def __fill_distinct_context_ref(self) -> None:
         """
-
+        Captures distinct contextRef info from XBRL data (i.e. contextRef="ChangeInHoldingOfSecurities001I")
         :return:
         """
         xml_tag_context_ref = self.__soup.find_all("context")
@@ -209,6 +209,22 @@ class XBRLProcessor(XBRLProcessorInterface):
             self.__context_ref_list.append(tag["id"])
 
     def __fill_distinct_context_refs_with_their_unique_tags_dict(self) -> None:
+        """
+        Captures all contextRef attributes (i.e. CategoryOfPerson, NameOfThePerson, TypeOfInstrument etc.), their
+        name and values. It is possible that some of the attributes might be missing in XBRL file. It is necessary
+        to capture these attributes directly from XBRL file.
+
+        Data structure is as follows:
+
+            __distinct_context_refs_with_their_unique_tags_dict = {
+                ChangeInHoldingOfSecurities001I: ["CategoryOfPerson", "NameOfThePerson", ...]
+                ChangeInHoldingOfSecurities002I: ["CategoryOfPerson", "NameOfThePerson", ...]
+                ChangeInHoldingOfSecurities003I: ["CategoryOfPerson", "NameOfThePerson", ...]
+                ...
+            }
+
+        :return:
+        """
         for tag_context_ref in self.__context_ref_list:
             temp_list = []
             for tag_to_search in self.__tags_to_search:
@@ -219,6 +235,11 @@ class XBRLProcessor(XBRLProcessorInterface):
             self.__distinct_context_refs_with_their_unique_tags_dict[tag_context_ref] = temp_list
 
     def __find_context_ref(self) -> None:
+        """
+        Finds contextRef which is the attribute that holds transactional information for person who made the
+        transaction.
+        :return:
+        """
         for key, value in self.__distinct_context_refs_with_their_unique_tags_dict.items():
             temp_dict = {}
             for item in value:
