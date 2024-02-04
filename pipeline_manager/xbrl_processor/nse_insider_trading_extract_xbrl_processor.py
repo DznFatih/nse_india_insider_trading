@@ -236,7 +236,7 @@ class XBRLProcessor(XBRLProcessorInterface):
 
     def __find_context_ref(self) -> None:
         """
-        Finds contextRef which is the attribute that holds transactional information for person who made the
+        Finds contextRef which is the attribute that holds all transactional details for person who made the
         transaction.
         :return:
         """
@@ -249,6 +249,16 @@ class XBRLProcessor(XBRLProcessorInterface):
                 break
 
     def __is_xbrl_data_match_with_table_data(self, dict_data: dict) -> bool:
+        """
+        Compares XBRL attribute values against the table row values. If all details match, it returns True,
+        otherwise False.
+
+        NameOfThePerson attribute might be missing in XBRL file. If all other details match, we can skip matching this
+        information.
+
+        :param dict_data: Currently running contextRef detail
+        :return:
+        """
         if dict_data.get("SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"):
             dict_data["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"] = (
                 self.__normalize_fraction(dict_data["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"]))
@@ -280,11 +290,21 @@ class XBRLProcessor(XBRLProcessorInterface):
 
     @staticmethod
     def __handle_text(str_from: str | None) -> str:
+        """
+        Replaces None or space characters with '-'.
+        :param str_from: string value
+        :return:
+        """
         if str_from is None or str_from == "" or str_from == " ":
             return "N/A"
         return str_from
 
     def __get_value_from_multiple_tag_result_based_on_context_ref(self, tag_name: str) -> str:
+        """
+        Returns values based on tag_name and contextRef if matches
+        :param tag_name: string value
+        :return:
+        """
         return_value: str = ""
         xml_tag = self.__find_all_tags(tag_name=tag_name)
         for tag in xml_tag:
@@ -293,11 +313,21 @@ class XBRLProcessor(XBRLProcessorInterface):
         return return_value
 
     def __find_all_tags(self, tag_name: str) -> element.ResultSet:
+        """
+        Uses Beautiful to search tags in file
+        :param tag_name: string value
+        :return:
+        """
         xml_tag = self.__soup.find_all(tag_name)
         return xml_tag
 
     @staticmethod
     def __normalize_fraction(str_data: str) -> str | None:
+        """
+        Deals with decimal values and removes additional 0 after dots. (i.e. 2.20 -> 2.2)
+        :param str_data: string value
+        :return: string or None
+        """
         if str_data == "-" or str_data is None:
             return None
         d = decimal.Decimal(str_data)
