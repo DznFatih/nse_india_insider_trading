@@ -1,5 +1,5 @@
 
-Python version - 3.12
+Python version - >=3.12
 
 HOW TO RUN CODE?
 
