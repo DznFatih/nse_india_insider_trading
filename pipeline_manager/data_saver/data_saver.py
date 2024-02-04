@@ -22,7 +22,7 @@ class FileSaver(DataSaver):
         """
         if self.__data:
             keys = self.__data[0].keys()
-            with open(folder_path_to_save_data / self.__file_name, "w", newline='') as f:
+            with open(folder_path_to_save_data / self.__file_name, "w", newline='', encoding="utf-8") as f:
                 dict_writer = csv.DictWriter(f, keys, delimiter="|")
                 dict_writer.writeheader()
                 dict_writer.writerows(self.__data)

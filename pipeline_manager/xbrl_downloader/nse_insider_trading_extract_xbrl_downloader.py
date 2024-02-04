@@ -62,3 +62,8 @@ class XBRLFileDownloader(XBRLFileDownloaderInterface):
         :return: string
         """
         return self.__xbrl_file_list[self.__xbrl_file_name]
+        # file_path = Path(
+        #     r'C:\Users\dznfa\OneDrive\Desktop\Tasks\NSE Trade Info\IT_1158985_1017273_11012024065838_WEB wrong trx captured.xml')
+        # with open(file_path, 'r') as f:
+        #     file = f.read()
+        # return file

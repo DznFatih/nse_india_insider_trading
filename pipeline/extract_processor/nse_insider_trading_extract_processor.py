@@ -103,7 +103,12 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
             otherwise it will store to __cleaned_data
         :return:
         """
+        temp_list_data = []
+
         for item in self.__raw_data:
+            # if item['did'] not in ['331470', '331466']:
+            #     continue
+
             self.__xbrl_processor.set_transaction_status_to_default()
             if item["xbrl"] is None or item["xbrl"] == "-":
                 self.__xbrl_processor.set_xbrl_link_status(True)
@@ -112,14 +117,16 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
                 self.__xbrl_downloader.download_xbrl_file_to_local_machine(xbrl_url=item["xbrl"],
                                                                            xbrl_folder_path=self.__xbrl_folder_path)
                 self.__xbrl_processor.set_beautiful_soup(data=self.__xbrl_downloader.get_xbrl_data())
-                self.__xbrl_processor.set_orphan_transaction_status(acqMode=item["acqMode"], secAcq=str(item["secAcq"]),
-                                                                    secType=item["secType"], secVal=str(item["secVal"]),
-                                                                    tdpTransactionType=item["tdpTransactionType"],
-                                                                    befAcqSharesNo=str(item["befAcqSharesNo"]),
-                                                                    afterAcqSharesNo=str(item["afterAcqSharesNo"]),
-                                                                    afterAcqSharesPer=str(item["afterAcqSharesPer"]),
-                                                                    befAcqSharesPer=str(item["befAcqSharesPer"]),
-                                                                    acqName=str(item["acqName"]))
+                self.__xbrl_processor.set_orphan_transaction_status(acqMode=item.get("acqMode"),
+                                                                    secAcq=str(item.get("secAcq")),
+                                                                    secType=item.get("secType"),
+                                                                    secVal=str(item.get("secVal")),
+                                                                    tdpTransactionType=item.get("tdpTransactionType"),
+                                                                    befAcqSharesNo=str(item.get("befAcqSharesNo")),
+                                                                    afterAcqSharesNo=str(item.get("afterAcqSharesNo")),
+                                                                    afterAcqSharesPer=str(item.get("afterAcqSharesPer")),
+                                                                    befAcqSharesPer=str(item.get("befAcqSharesPer")),
+                                                                    acqName=str(item.get("acqName")))
                 data: dict = self.__get_data(dict_data=item)
 
             if self.__xbrl_processor.get_orphan_transaction_status():

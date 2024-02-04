@@ -49,6 +49,10 @@ class XBRLProcessor(XBRLProcessorInterface):
         """
         self.__is_transaction_orphan = False
         self.__is_xbrl_link_missing = False
+        self.__context_ref: str = ""
+        self.__data_to_compare = {}
+        self.__context_ref_list = list()
+        self.__distinct_context_refs_with_their_unique_tags_dict = {}
 
     def set_beautiful_soup(self, data: str) -> None:
         """
@@ -91,11 +95,12 @@ class XBRLProcessor(XBRLProcessorInterface):
                                     befAcqSharesPer, acqName)
         self.__fill_distinct_context_ref()
         self.__fill_distinct_context_refs_with_their_unique_tags_dict()
-        self.__find_context_ref()
-        if self.__context_ref:
-            self.__is_transaction_orphan = False
-        else:
+        context_ref: list[str] = self.__find_context_ref()
+        if len(context_ref) > 1 or len(context_ref) == 0:
             self.__is_transaction_orphan = True
+        elif len(context_ref) == 1:
+            self.__context_ref = context_ref[0]
+            self.__is_transaction_orphan = False
 
     def get_orphan_transaction_status(self) -> bool:
         """
@@ -234,19 +239,20 @@ class XBRLProcessor(XBRLProcessorInterface):
                         temp_list.append(tag_search_result)
             self.__distinct_context_refs_with_their_unique_tags_dict[tag_context_ref] = temp_list
 
-    def __find_context_ref(self) -> None:
+    def __find_context_ref(self) -> list[str]:
         """
         Finds contextRef which is the attribute that holds all transactional details for person who made the
         transaction.
         :return:
         """
+        context_ref: list[str] = list()
         for key, value in self.__distinct_context_refs_with_their_unique_tags_dict.items():
             temp_dict = {}
             for item in value:
                 temp_dict[item.name] = str(item.text)
             if self.__is_xbrl_data_match_with_table_data(dict_data=temp_dict) is True:
-                self.__context_ref = key
-                break
+                context_ref.append(key)
+        return context_ref
 
     def __is_xbrl_data_match_with_table_data(self, dict_data: dict) -> bool:
         """
@@ -255,6 +261,12 @@ class XBRLProcessor(XBRLProcessorInterface):
 
         NameOfThePerson attribute might be missing in XBRL file. If all other details match, we can skip matching this
         information.
+
+        Even if we use all fields from table row to match data in XBRL file to find associated transaction,
+        it is possible that two rows of the table will have exactly the same information
+        (i.e. https://nsearchives.nseindia.com/corporate/xbrl/IT_1088925_375556_01012021042258_WEB.xml) which will
+        make it impossible to find associated transaction in XBRL file. They will be considered as orphaned transactions
+        too.
 
         :param dict_data: Currently running contextRef detail
         :return:
@@ -295,7 +307,7 @@ class XBRLProcessor(XBRLProcessorInterface):
         :param str_from: string value
         :return:
         """
-        if str_from is None or str_from == "" or str_from == " ":
+        if str_from is None or str_from.casefold() in ['none', '', '-', ' ']:
             return "N/A"
         return str_from
 
@@ -328,7 +340,7 @@ class XBRLProcessor(XBRLProcessorInterface):
         :param str_data: string value
         :return: string or None
         """
-        if str_data == "-" or str_data is None:
+        if str_data in ["-", "None", "", " "] or str_data is None:
             return None
         d = decimal.Decimal(str_data)
         normalized = d.normalize()
