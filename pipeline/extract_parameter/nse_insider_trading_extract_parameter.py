@@ -1,5 +1,7 @@
 from metadata.source_metadata.nse_insider_trading_source_metadata import NSEIndiaInsiderTradingSourceMetadata
 from pipeline.extract_processor.nse_insider_trading_extract_processor import NSEIndiaInsiderTradingExtractProcessor
+from pipeline_manager.metadata_saver.metadata_saver import MetadataSaver
+from pipeline_manager.metadata_saver.metadata_saver_interface import MetadataSaverInterface
 from pipeline_manager.xbrl_downloader.nse_insider_trading_extract_xbrl_downloader import XBRLFileDownloader
 from pipeline_manager.xbrl_downloader.xbrl_file_downloader_interface import XBRLFileDownloaderInterface
 from pipeline_manager.xbrl_processor.nse_insider_trading_extract_xbrl_processor import XBRLProcessor
@@ -25,7 +27,8 @@ class NSEIndiaInsiderTradingExtractParameter(EntityParameter):
         :param from_date: Optional parameter. When skipped, default value of today - 365 will be used
         :param to_date: Optional parameter. When skipped, default value of today will be used
         """
-        self.__primary_source_data_key_name: str = "insider_trading"
+        self.__data_description: str = "IndiaNSEInsiderTransactions"
+        self.__primary_source_data_key_name: str = "IndiaNSEInsiderTransactions"
         self.__from_date: str = from_date
         self.__to_date: str = to_date
         self.__source_metadata: NSEIndiaInsiderTradingSourceMetadata = NSEIndiaInsiderTradingSourceMetadata()
@@ -42,6 +45,7 @@ class NSEIndiaInsiderTradingExtractParameter(EntityParameter):
             primary_source_data_key_name=self.__primary_source_data_key_name,
             xbrl_downloader=self.__xbrl_downloader,
             xbrl_processor=self.__xbrl_processor)
+        self.__metadata_logger = MetadataSaver()
 
     def get_primary_source(self) -> list[PrimarySource]:
         """
@@ -68,9 +72,7 @@ class NSEIndiaInsiderTradingExtractParameter(EntityParameter):
         :return: list of FileSave
         """
         return [FileSaver(data=self.__data_processor.get_cleaned_data(),
-                          file_name="NSEData.txt"),
-                FileSaver(data=self.__data_processor.get_orphan_cleaned_data(),
-                          file_name="OrphanedNSEData.txt")]
+                          file_name="NSEData.txt")]
 
     def get_folder_creator(self) -> FolderCreator:
         """
@@ -78,3 +80,17 @@ class NSEIndiaInsiderTradingExtractParameter(EntityParameter):
         :return: XBRLFolderCreator
         """
         return self.xbrl_folder_creator
+
+    def get_data_source_description(self) -> str:
+        """
+        Returns data source description
+        :return:
+        """
+        return self.__data_description
+
+    def get_metadata_logger(self) -> MetadataSaverInterface:
+        """
+        Returns MetadataSaverInterface
+        :return:
+        """
+        return self.__metadata_logger

@@ -15,3 +15,15 @@ class XBRLFileDownloaderInterface(ABC):
     @abstractmethod
     def get_xbrl_data(self) -> str:
         pass
+
+    @abstractmethod
+    def get_xbrl_document_page_visit_attempt_count(self) -> int:
+        pass
+
+    @abstractmethod
+    def get_xbrl_document_download_success_count(self) -> int:
+        pass
+
+    @abstractmethod
+    def get_xbrl_document_download_error_count(self) -> int:
+        pass

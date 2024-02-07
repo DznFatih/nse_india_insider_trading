@@ -13,7 +13,9 @@ def entity_base_initiator(entity_parameter: EntityParameter) -> None:
     entity_base = EntityBase(primary_source_list=entity_parameter.primary_source(),
                              data_processor=entity_parameter.data_processor(),
                              data_saver=entity_parameter.data_saver(),
-                             folder_creator=entity_parameter.folder_creator())
+                             folder_creator=entity_parameter.folder_creator(),
+                             data_description=entity_parameter.get_data_source_description(),
+                             metadata_logger=entity_parameter.get_metadata_logger())
     entity_base.initiate_pipeline()
 
 
@@ -49,7 +51,7 @@ if __name__ == "__main__":
     log_info: dict = {}
     try:
         # date_format -> 'DD-MM-YYYY'
-        parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date="01-01-2021", to_date="01-01-2021")
+        parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date="01-07-2020", to_date="01-07-2020")
         entity_base_initiator(entity_parameter=parameter)
         log_info = {"content": "successful"}
         log_info_to_a_file(log_info)

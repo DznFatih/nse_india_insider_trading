@@ -32,14 +32,14 @@ class XBRLProcessor(XBRLProcessorInterface):
                                  "SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding",
                                  "NameOfThePerson"]
 
-    def set_xbrl_link_status(self, set_value: bool) -> None:
+    def set_xbrl_link_status(self, is_xbrl_link_missing: bool) -> None:
         """
         Allows caller to set xbrl link missing status. If set to False, this object wont take any further action in
         process_general_xbrl_data method
-        :param set_value: Boolean values
+        :param is_xbrl_link_missing: Boolean values
         :return:
         """
-        self.__is_xbrl_link_missing = set_value
+        self.__is_xbrl_link_missing = is_xbrl_link_missing
 
     def set_transaction_status_to_default(self) -> None:
         """

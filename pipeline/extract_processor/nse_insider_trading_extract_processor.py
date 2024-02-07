@@ -27,7 +27,6 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         self.__primary_source_data_key_name: str = primary_source_data_key_name
         self.__raw_data: list[dict] = list()
         self.__cleaned_data: list[dict] = list()
-        self.__orphan_cleaned_data: list[dict] = list()
         self.__insert_date: datetime = datetime.datetime.strptime(
                                                             datetime.datetime.now(timezone.utc).
                                                             strftime("%Y-%m-%d %H:%M:%S"), '%Y-%m-%d %H:%M:%S')
@@ -35,6 +34,8 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         self.__xbrl_processor: XBRLProcessorInterface = xbrl_processor
         self.__is_orphaned_data: bool = False
         self.__xbrl_folder_path: Path = Path()
+        self.__xbrl_document_download_start_time: str = None
+        self.__xbrl_document_download_end_time: str = None
 
     def get_cleaned_data(self) -> list[dict]:
         """
@@ -42,14 +43,6 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         :return: Returns clean data
         """
         return self.__cleaned_data
-
-    def get_orphan_cleaned_data(self) -> list[dict]:
-        """
-        Orphan data means transaction has XBRL file but it was not identified in the file by any
-        means.
-        :return:
-        """
-        return self.__orphan_cleaned_data
 
     def get_cleaned_row_count(self) -> int:
         return len(self.__cleaned_data)
@@ -99,40 +92,51 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
             3.2 it will ask XBRL file processor to identify currently processing transaction
             3.3 If transaction found in the file, then it will set is_orphan_transaction status to false
             3.4 It will make a call to its method __get_data to start processing current transaction
-        4-  It will check if current transaction is orphan. If it is, it will store it to __orphan_cleaned_data,
-            otherwise it will store to __cleaned_data
+        4-  It will check if current transaction is orphan. If it is, it will flag it as Y, otherwise it will be
+            flagged as "N",
         :return:
         """
-        temp_list_data = []
-
         for item in self.__raw_data:
-            # if item['did'] not in ['331470', '331466']:
-            #     continue
-
             self.__xbrl_processor.set_transaction_status_to_default()
-            if item["xbrl"] is None or item["xbrl"] == "-":
-                self.__xbrl_processor.set_xbrl_link_status(True)
-                data: dict = self.__get_data(dict_data=item)
-            else:
-                self.__xbrl_downloader.download_xbrl_file_to_local_machine(xbrl_url=item["xbrl"],
-                                                                           xbrl_folder_path=self.__xbrl_folder_path)
-                self.__xbrl_processor.set_beautiful_soup(data=self.__xbrl_downloader.get_xbrl_data())
-                self.__xbrl_processor.set_orphan_transaction_status(acqMode=item.get("acqMode"),
-                                                                    secAcq=str(item.get("secAcq")),
-                                                                    secType=item.get("secType"),
-                                                                    secVal=str(item.get("secVal")),
-                                                                    tdpTransactionType=item.get("tdpTransactionType"),
-                                                                    befAcqSharesNo=str(item.get("befAcqSharesNo")),
-                                                                    afterAcqSharesNo=str(item.get("afterAcqSharesNo")),
-                                                                    afterAcqSharesPer=str(item.get("afterAcqSharesPer")),
-                                                                    befAcqSharesPer=str(item.get("befAcqSharesPer")),
-                                                                    acqName=str(item.get("acqName")))
-                data: dict = self.__get_data(dict_data=item)
+            self.__handle_xbrl_transaction_status(dict_data=item)
+            data: dict = self.__get_data(dict_data=item)
+            self.__cleaned_data.append(data)
+        self.__set_xbrl_document_download_end_time()
 
-            if self.__xbrl_processor.get_orphan_transaction_status():
-                self.__orphan_cleaned_data.append(data)
-            else:
-                self.__cleaned_data.append(data)
+    def __handle_xbrl_transaction_status(self, dict_data: dict) -> None:
+        """
+        Sets XBRL data status in __xbrl_processor. If there is not a link to XBRL file, then set is_xbrl_link_missing
+        to True. If there is XBRL link, download the file. Check if there is data returned. If there is no data returned
+        then again set is_xbrl_link_missing to True, otherwise find the transaction in XBRL file.
+        :param dict_data: dictionary data
+        :return: None
+        """
+        if dict_data["xbrl"] is None or dict_data["xbrl"] == "-":
+            self.__xbrl_processor.set_xbrl_link_status(is_xbrl_link_missing=True)
+            return
+
+        self.__set_xbrl_document_download_start_time()
+
+        self.__xbrl_downloader.download_xbrl_file_to_local_machine(dict_data["xbrl"],
+                                                                   xbrl_folder_path=self.__xbrl_folder_path)
+        if self.__xbrl_downloader.get_xbrl_data() is None:
+            self.__xbrl_processor.set_xbrl_link_status(is_xbrl_link_missing=True)
+            return
+        self.__xbrl_processor.set_beautiful_soup(data=self.__xbrl_downloader.get_xbrl_data())
+        self.__xbrl_processor.set_orphan_transaction_status(acqMode=dict_data.get("acqMode"),
+                                                            secAcq=str(dict_data.get("secAcq")),
+                                                            secType=dict_data.get("secType"),
+                                                            secVal=str(dict_data.get("secVal")),
+                                                            tdpTransactionType=dict_data.get(
+                                                                "tdpTransactionType"),
+                                                            befAcqSharesNo=str(dict_data.get("befAcqSharesNo")),
+                                                            afterAcqSharesNo=str(
+                                                                dict_data.get("afterAcqSharesNo")),
+                                                            afterAcqSharesPer=str(
+                                                                dict_data.get("afterAcqSharesPer")),
+                                                            befAcqSharesPer=str(
+                                                                dict_data.get("befAcqSharesPer")),
+                                                            acqName=str(dict_data.get("acqName")))
 
     def __get_data(self, dict_data: dict) -> dict:
         """
@@ -320,8 +324,14 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         data["Currency"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="Currency")
+        data["IsOrphan"] = self.__get_is_orphan_info()
         data["DownloadDate"] = self.__insert_date
         return data
+
+    def __get_is_orphan_info(self) -> str:
+        if self.__xbrl_processor.get_orphan_transaction_status():
+            return "Y"
+        return "N"
 
     @staticmethod
     def __check_if_isin_data_available(isin_data: str) -> str:
@@ -333,3 +343,27 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         if isin_data:
             return "Y"
         return "N"
+
+    def __set_xbrl_document_download_start_time(self) -> None:
+        if self.__xbrl_document_download_start_time is None:
+            self.__xbrl_document_download_start_time = (
+                datetime.datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"))
+
+    def __set_xbrl_document_download_end_time(self) -> None:
+        if self.__xbrl_document_download_start_time is not None:
+            self.__xbrl_document_download_end_time = datetime.datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+    def get_xbrl_document_download_start_time(self) -> str:
+        return self.__xbrl_document_download_start_time
+
+    def get_xbrl_document_download_end_time(self) -> str:
+        return self.__xbrl_document_download_end_time
+
+    def get_xbrl_document_page_visit_attempt_count(self) -> int:
+        return self.__xbrl_downloader.get_xbrl_document_page_visit_attempt_count()
+
+    def get_xbrl_document_download_success_count(self) -> int:
+        return self.__xbrl_downloader.get_xbrl_document_download_success_count()
+
+    def get_xbrl_document_download_error_count(self) -> int:
+        return self.__xbrl_downloader.get_xbrl_document_download_error_count()

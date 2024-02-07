@@ -88,7 +88,7 @@ class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
 
     def __init__(self, header: dict, cookie_url: str, base_url: str):
         """
-        Downloads XBRL files from target link. Each XBRL file link is placed inside a table and they have
+        Downloads XBRL files from target link. Each XBRL file link is placed inside a table, and they have
         the transactional information from their respective row.
         :param header: Header data in the form of dictionary
         :param cookie_url: URL to download cookie info from target website
@@ -104,22 +104,9 @@ class NSEIndiaHTTPXBRLFilePrimarySource(XBRLPrimarySource):
         :param xbrl_url: target url
         :return: Returns response from the website
         """
-        try:
-            self.__get_cookie_info()
-            xbrl_resp = requests.get(xbrl_url, headers=self.__header)
-            return xbrl_resp
-        except requests.HTTPError as e:
-            raise requests.HTTPError(get_error_details(e))
-        except requests.ConnectionError as e:
-            raise requests.ConnectionError(get_error_details(e))
-        except TypeError as e:
-            raise TypeError(get_error_details(e))
-        except KeyError as e:
-            raise KeyError(get_error_details(e))
-        except ValueError as e:
-            raise ValueError(get_error_details(e))
-        except Exception as e:
-            raise Exception(get_error_details(e))
+        self.__get_cookie_info()
+        xbrl_resp = requests.get(xbrl_url, headers=self.__header)
+        return xbrl_resp
 
     def __get_cookie_info(self) -> None:
         """

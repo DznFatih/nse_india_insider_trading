@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from pipeline_manager.data_saver.data_saver_interface import DataSaver
 from pipeline_manager.entity_processor.entity_processor import EntityProcessor
 from pipeline_manager.folder_creator.folder_creator_interface import FolderCreator
+from pipeline_manager.metadata_saver.metadata_saver_interface import MetadataSaverInterface
 from pipeline_manager.primary_source.primary_source_interface import PrimarySource
 
 
@@ -36,4 +37,18 @@ class EntityParameter(ABC):
 
     @abstractmethod
     def get_data_saver(self) -> list[DataSaver]:
+        pass
+
+    def data_source_description(self) -> str:
+        return self.get_data_source_description()
+
+    @abstractmethod
+    def get_data_source_description(self) -> str:
+        pass
+
+    def metadata_logger(self) -> MetadataSaverInterface:
+        return self.get_metadata_logger()
+
+    @abstractmethod
+    def get_metadata_logger(self) -> MetadataSaverInterface:
         pass

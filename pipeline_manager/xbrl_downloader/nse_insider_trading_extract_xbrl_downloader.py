@@ -21,31 +21,33 @@ class XBRLFileDownloader(XBRLFileDownloaderInterface):
         self.__xbrl_data: models.Response = None
         self.__xbrl_folder_path: Path = Path()
         self.__xbrl_file_list: dict = dict()
+        self.__xbrl_document_page_visit_attempt_count: int = 0
+        self.__xbrl_document_download_success_count: int = 0
+        self.__xbrl_document_download_error_count: int = 0
 
     def download_xbrl_file_to_local_machine(self, xbrl_url: str, xbrl_folder_path: Path) -> None:
         """
-        Downloads XBRL documents from target url and saves it to local machine
+        Downloads XBRL documents from target url and saves it to local machine. Counts attempts
+        to access to source, successful download and errors
         :param xbrl_url: XBRL link
         :param xbrl_folder_path: folder path to save this file in xml format
         :return:
         """
-        try:
-            self.__xbrl_file_name: str = self.__get_file_name_from_xbrl_url(xbrl_url=xbrl_url)
-            print(f"Downloading file -> {self.__xbrl_file_name}")
-            if self.__xbrl_file_list.get(self.__xbrl_file_name) is None:
-                self.__xbrl_folder_path = xbrl_folder_path
+        self.__xbrl_file_name: str = self.__get_file_name_from_xbrl_url(xbrl_url=xbrl_url)
+        print(f"Downloading file -> {self.__xbrl_file_name}")
+        if self.__xbrl_file_list.get(self.__xbrl_file_name) is None:
+            self.__xbrl_folder_path = xbrl_folder_path
+            try:
+                self.__xbrl_document_page_visit_attempt_count += 1
                 self.__xbrl_data: models.Response = self.__primary_source.get_data(xbrl_url=xbrl_url)
-                self.__xbrl_file_list[self.__xbrl_file_name] = self.__xbrl_data.text
-                with open(self.__xbrl_folder_path / self.__xbrl_file_name, 'w') as f:
-                    f.write(self.__xbrl_data.text)
-        except KeyError as e:
-            raise KeyError(get_error_details(e))
-        except TypeError as e:
-            raise TypeError(get_error_details(e))
-        except ValueError as e:
-            raise ValueError(get_error_details(e))
-        except Exception as e:
-            raise Exception(get_error_details(e))
+                self.__xbrl_document_download_success_count += 1
+            except Exception as e:
+                self.__xbrl_document_download_error_count += 1
+                self.__xbrl_file_list[self.__xbrl_file_name] = None
+                return
+            self.__xbrl_file_list[self.__xbrl_file_name] = self.__xbrl_data.text
+            with open(self.__xbrl_folder_path / self.__xbrl_file_name, 'w') as f:
+                f.write(self.__xbrl_data.text)
 
     @staticmethod
     def __get_file_name_from_xbrl_url(xbrl_url: str) -> str:
@@ -62,8 +64,12 @@ class XBRLFileDownloader(XBRLFileDownloaderInterface):
         :return: string
         """
         return self.__xbrl_file_list[self.__xbrl_file_name]
-        # file_path = Path(
-        #     r'C:\Users\dznfa\OneDrive\Desktop\Tasks\NSE Trade Info\IT_1158985_1017273_11012024065838_WEB wrong trx captured.xml')
-        # with open(file_path, 'r') as f:
-        #     file = f.read()
-        # return file
+
+    def get_xbrl_document_page_visit_attempt_count(self) -> int:
+        return self.__xbrl_document_page_visit_attempt_count
+
+    def get_xbrl_document_download_success_count(self) -> int:
+        return self.__xbrl_document_download_success_count
+
+    def get_xbrl_document_download_error_count(self) -> int:
+        return  self.__xbrl_document_download_error_count
