@@ -1,4 +1,5 @@
-from lib.lib import Path, csv
+from lib.lib import Path
+from pipeline_manager.get_error_details.get_error_details import get_error_details
 from pipeline_manager.metadata_saver.metadata_saver_interface import MetadataSaverInterface
 
 
@@ -18,11 +19,14 @@ class MetadataSaver(MetadataSaverInterface):
         :param data: dictionary data
         :return:
         """
-        if data:
-            headers = list(data.keys())
-            values = list(data.values())
-            with open(folder_path / self.__file_name, "w", encoding="utf-8") as f:
-                delimiter = '|'
-                f.write(f"{delimiter}".join(headers))
-                f.write("\n")
-                f.write(f"{delimiter}".join(values))
+        try:
+            if data:
+                headers = list(data.keys())
+                values = list(data.values())
+                with open(folder_path / self.__file_name, "w", encoding="utf-8") as f:
+                    delimiter = '|'
+                    f.write(f"{delimiter}".join(headers))
+                    f.write("\n")
+                    f.write(f"{delimiter}".join(values))
+        except Exception as e:
+            raise Exception(get_error_details(e))

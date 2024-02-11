@@ -346,6 +346,8 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
 
     @staticmethod
     def __validate_date(date_string: str) -> str | None:
+        if date_string is None:
+            return None
         try:
             if bool(parser.parse(date_string)):
                 return date_string
@@ -353,15 +355,19 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
             return None
 
     @staticmethod
-    def __validate_integer(number_string: str):
+    def __validate_integer(number_string: str) -> str | None:
+        if number_string is None:
+            return None
         if number_string.isdigit():
             return number_string
         return None
 
     @staticmethod
-    def __validate_decimal(number_string: str):
+    def __validate_decimal(number_string: str) -> str | None:
+        if number_string is None:
+            return None
         try:
-            if float(number_string):
+            if float(number_string) or number_string.isdigit():
                 return number_string
         except ValueError as e:
             return None
