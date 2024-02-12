@@ -242,10 +242,18 @@ class XBRLProcessor(XBRLProcessorInterface):
     def __find_context_ref(self) -> list[str]:
         """
         Finds contextRef which is the attribute that holds all transactional details for person who made the
-        transaction.
+        transaction. If there is only single contextRef found, then this transaction will be considered the
+        corresponding transaction to the row and it will return value immediately.
+
+        contextRef is used to identify transactional details of the person.
+
         :return:
         """
         context_ref: list[str] = list()
+        if len(self.__distinct_context_refs_with_their_unique_tags_dict) == 1:
+            context_ref.append(list(self.__distinct_context_refs_with_their_unique_tags_dict.keys())[0])
+            return context_ref
+
         for key, value in self.__distinct_context_refs_with_their_unique_tags_dict.items():
             temp_dict = {}
             for item in value:

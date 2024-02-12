@@ -97,6 +97,8 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         :return:
         """
         for item in self.__raw_data:
+            # if item["did"] != '493201':
+            #     continue
             self.__xbrl_processor.set_transaction_status_to_default()
             self.__handle_xbrl_transaction_status(dict_data=item)
             data: dict = self.__get_data(dict_data=item)

@@ -24,7 +24,7 @@ class MetadataSaver(MetadataSaverInterface):
                 headers = list(data.keys())
                 values = list(data.values())
                 with open(folder_path / self.__file_name, "w", encoding="utf-8") as f:
-                    delimiter = '|'
+                    delimiter = '^'
                     f.write(f"{delimiter}".join(headers))
                     f.write("\n")
                     f.write(f"{delimiter}".join(values))
