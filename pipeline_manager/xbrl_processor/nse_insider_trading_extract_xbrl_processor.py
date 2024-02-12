@@ -243,7 +243,7 @@ class XBRLProcessor(XBRLProcessorInterface):
         """
         Finds contextRef which is the attribute that holds all transactional details for person who made the
         transaction. If there is only single contextRef found, then this transaction will be considered the
-        corresponding transaction to the row and it will return value immediately.
+        corresponding transaction to the row, and it will return value immediately.
 
         contextRef is used to identify transactional details of the person.
 
