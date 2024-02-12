@@ -4,7 +4,9 @@ from requests import models
 
 
 class PrimarySource(ABC):
-
+    """
+    Primary source interface.
+    """
     @abstractmethod
     def get_data(self) -> list[dict]:
         pass

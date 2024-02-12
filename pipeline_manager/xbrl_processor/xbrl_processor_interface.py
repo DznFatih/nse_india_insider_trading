@@ -8,7 +8,7 @@ class XBRLProcessorInterface(ABC):
         pass
 
     @abstractmethod
-    def set_xbrl_link_status(self, set_value: bool) -> None:
+    def set_xbrl_link_status(self, is_xbrl_link_missing: bool) -> None:
         pass
 
     @abstractmethod

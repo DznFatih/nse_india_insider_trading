@@ -1,5 +1,5 @@
 from pipeline_manager.entity_processor.entity_processor import EntityProcessor
-from lib.lib import datetime, timezone, Path
+from lib.lib import datetime, timezone, Path, parser
 from pipeline_manager.get_error_details.get_error_details import get_error_details
 from pipeline_manager.xbrl_downloader.xbrl_file_downloader_interface import XBRLFileDownloaderInterface
 from pipeline_manager.xbrl_processor.xbrl_processor_interface import XBRLProcessorInterface
@@ -27,7 +27,6 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         self.__primary_source_data_key_name: str = primary_source_data_key_name
         self.__raw_data: list[dict] = list()
         self.__cleaned_data: list[dict] = list()
-        self.__orphan_cleaned_data: list[dict] = list()
         self.__insert_date: datetime = datetime.datetime.strptime(
                                                             datetime.datetime.now(timezone.utc).
                                                             strftime("%Y-%m-%d %H:%M:%S"), '%Y-%m-%d %H:%M:%S')
@@ -35,6 +34,8 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         self.__xbrl_processor: XBRLProcessorInterface = xbrl_processor
         self.__is_orphaned_data: bool = False
         self.__xbrl_folder_path: Path = Path()
+        self.__xbrl_document_download_start_time: str = None
+        self.__xbrl_document_download_end_time: str = None
 
     def get_cleaned_data(self) -> list[dict]:
         """
@@ -42,14 +43,6 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         :return: Returns clean data
         """
         return self.__cleaned_data
-
-    def get_orphan_cleaned_data(self) -> list[dict]:
-        """
-        Orphan data means transaction has XBRL file but it was not identified in the file by any
-        means.
-        :return:
-        """
-        return self.__orphan_cleaned_data
 
     def get_cleaned_row_count(self) -> int:
         return len(self.__cleaned_data)
@@ -99,33 +92,53 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
             3.2 it will ask XBRL file processor to identify currently processing transaction
             3.3 If transaction found in the file, then it will set is_orphan_transaction status to false
             3.4 It will make a call to its method __get_data to start processing current transaction
-        4-  It will check if current transaction is orphan. If it is, it will store it to __orphan_cleaned_data,
-            otherwise it will store to __cleaned_data
+        4-  It will check if current transaction is orphan. If it is, it will flag it as Y, otherwise it will be
+            flagged as "N",
         :return:
         """
         for item in self.__raw_data:
+            # if item["did"] != '493201':
+            #     continue
             self.__xbrl_processor.set_transaction_status_to_default()
-            if item["xbrl"] is None or item["xbrl"] == "-":
-                self.__xbrl_processor.set_xbrl_link_status(True)
-                data: dict = self.__get_data(dict_data=item)
-            else:
-                self.__xbrl_downloader.download_xbrl_file_to_local_machine(xbrl_url=item["xbrl"],
-                                                                           xbrl_folder_path=self.__xbrl_folder_path)
-                self.__xbrl_processor.set_beautiful_soup(data=self.__xbrl_downloader.get_xbrl_data())
-                self.__xbrl_processor.set_orphan_transaction_status(acqMode=item["acqMode"], secAcq=str(item["secAcq"]),
-                                                                    secType=item["secType"], secVal=str(item["secVal"]),
-                                                                    tdpTransactionType=item["tdpTransactionType"],
-                                                                    befAcqSharesNo=str(item["befAcqSharesNo"]),
-                                                                    afterAcqSharesNo=str(item["afterAcqSharesNo"]),
-                                                                    afterAcqSharesPer=str(item["afterAcqSharesPer"]),
-                                                                    befAcqSharesPer=str(item["befAcqSharesPer"]),
-                                                                    acqName=str(item["acqName"]))
-                data: dict = self.__get_data(dict_data=item)
+            self.__handle_xbrl_transaction_status(dict_data=item)
+            data: dict = self.__get_data(dict_data=item)
+            self.__cleaned_data.append(data)
+        self.__set_xbrl_document_download_end_time()
 
-            if self.__xbrl_processor.get_orphan_transaction_status():
-                self.__orphan_cleaned_data.append(data)
-            else:
-                self.__cleaned_data.append(data)
+    def __handle_xbrl_transaction_status(self, dict_data: dict) -> None:
+        """
+        Sets XBRL data status in __xbrl_processor. If there is not a link to XBRL file, then set is_xbrl_link_missing
+        to True. If there is XBRL link, download the file. Check if there is data returned. If there is no data returned
+        then again set is_xbrl_link_missing to True, otherwise find the transaction in XBRL file.
+        :param dict_data: dictionary data
+        :return: None
+        """
+        if dict_data["xbrl"] is None or dict_data["xbrl"] == "-":
+            self.__xbrl_processor.set_xbrl_link_status(is_xbrl_link_missing=True)
+            return
+
+        self.__set_xbrl_document_download_start_time()
+
+        self.__xbrl_downloader.download_xbrl_file_to_local_machine(dict_data["xbrl"],
+                                                                   xbrl_folder_path=self.__xbrl_folder_path)
+        if self.__xbrl_downloader.get_xbrl_data() is None:
+            self.__xbrl_processor.set_xbrl_link_status(is_xbrl_link_missing=True)
+            return
+        self.__xbrl_processor.set_beautiful_soup(data=self.__xbrl_downloader.get_xbrl_data())
+        self.__xbrl_processor.set_orphan_transaction_status(acqMode=dict_data.get("acqMode"),
+                                                            secAcq=str(dict_data.get("secAcq")),
+                                                            secType=dict_data.get("secType"),
+                                                            secVal=str(dict_data.get("secVal")),
+                                                            tdpTransactionType=dict_data.get(
+                                                                "tdpTransactionType"),
+                                                            befAcqSharesNo=str(dict_data.get("befAcqSharesNo")),
+                                                            afterAcqSharesNo=str(
+                                                                dict_data.get("afterAcqSharesNo")),
+                                                            afterAcqSharesPer=str(
+                                                                dict_data.get("afterAcqSharesPer")),
+                                                            befAcqSharesPer=str(
+                                                                dict_data.get("befAcqSharesPer")),
+                                                            acqName=str(dict_data.get("acqName")))
 
     def __get_data(self, dict_data: dict) -> dict:
         """
@@ -136,23 +149,23 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         data: dict = dict()
 
         data["AcquisitionMode"] = dict_data.get("acqMode")
-        data["AcquisitionfromDate"] = dict_data.get("acqfromDt")
-        data["AcquisitionToDate"] = dict_data.get("acqtoDt")
+        data["AcquisitionfromDate"] = self.__validate_date(dict_data.get("acqfromDt"))
+        data["AcquisitionToDate"] = self.__validate_date(dict_data.get("acqtoDt"))
         data["AfterAcquisitionSharesNo"] = dict_data.get("afterAcqSharesNo")
-        data["AfterAcquisitionSharesPercentage"] = dict_data.get("afterAcqSharesPer")
+        data["AfterAcquisitionSharesPercentage"] = self.__validate_decimal(dict_data.get("afterAcqSharesPer"))
         data["BeforeAcquisitionSharesNo"] = dict_data.get("befAcqSharesNo")
-        data["BeforeAcquisitionSharesPercentage"] = dict_data.get("befAcqSharesPer")
-        data["BuyQuantity"] = dict_data.get("buyQuantity")
-        data["BuyValue"] = dict_data.get("buyValue")
+        data["BeforeAcquisitionSharesPercentage"] = self.__validate_decimal(dict_data.get("befAcqSharesPer"))
+        data["BuyQuantity"] = self.__validate_integer(dict_data.get("buyQuantity"))
+        data["BuyValue"] = self.__validate_decimal(dict_data.get("buyValue"))
         data["DerivativeType"] = dict_data.get("derivativeType")
         data["Did"] = dict_data.get("did")
         data["Exchange"] = dict_data.get("exchange")
-        data["IntimDate"] = dict_data.get("intimDt")
-        data["PID"] = dict_data.get("pid")
+        data["IntimDate"] = self.__validate_date(dict_data.get("intimDt"))
+        data["PID"] = self.__validate_integer(dict_data.get("pid"))
         data["Remarks"] = dict_data.get("remarks")
-        data["SecuritiesValue"] = dict_data.get("secVal")
+        data["SecuritiesValue"] = self.__validate_decimal(dict_data.get("secVal"))
         data["SecuritiesTypePost"] = dict_data.get("securitiesTypePost")
-        data["SellValue"] = dict_data.get("sellValue")
+        data["SellValue"] = self.__validate_decimal(dict_data.get("sellValue"))
         data["TDPDerivativeContractType"] = dict_data.get("tdpDerivativeContractType")
         data["TKDAcqm"] = dict_data.get("tkdAcqm")
         data["Symbol"] = dict_data.get("symbol")
@@ -160,13 +173,13 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         data["Regulation"] = dict_data.get("anex")
         data["NameOfTheAcquirerORDisposer"] = dict_data.get("acqName")
         data["TypeOfSecurity"] = dict_data.get("secType")
-        data["NoOfSecurities"] = dict_data.get("secAcq")
+        data["NoOfSecurities"] = self.__validate_integer(dict_data.get("secAcq"))
         data["AcquisitionORDisposal"] = dict_data.get("tdpTransactionType")
-        data["BroadcastDateTime"] = dict_data.get("date")
+        data["BroadcastDateTime"] = self.__validate_date(dict_data.get("date"))
         data["XBRLLink"] = dict_data.get("xbrl")
-        data["Period"] = self.__xbrl_processor.process_xbrl_data_to_get_context_info(
+        data["Period"] = self.__validate_date(self.__xbrl_processor.process_xbrl_data_to_get_context_info(
                 parent_tag_name="context",
-                child_tag_name="period")
+                child_tag_name="period"))
         data["ScripCode"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
                 tag_to_search="BSEScripCode")
         data["NSESymbol"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
@@ -221,20 +234,20 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalAbstract")
         data["SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity")
+                self.__validate_integer(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity"))
         data["SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding")
+                self.__validate_decimal(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"))
         data["SecuritiesAcquiredOrDisposedAbstract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="SecuritiesAcquiredOrDisposedAbstract")
         data["SecuritiesAcquiredOrDisposedNumberOfSecurity"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SecuritiesAcquiredOrDisposedNumberOfSecurity")
+                self.__validate_integer(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="SecuritiesAcquiredOrDisposedNumberOfSecurity"))
         data["SecuritiesAcquiredOrDisposedValueOfSecurity"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SecuritiesAcquiredOrDisposedValueOfSecurity")
+                self.__validate_decimal(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="SecuritiesAcquiredOrDisposedValueOfSecurity"))
         data["SecuritiesAcquiredOrDisposedTransactionType"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="SecuritiesAcquiredOrDisposedTransactionType")
@@ -242,23 +255,23 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="SecuritiesHeldPostAcquistionOrDisposalAbstract")
         data["SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity")
+                self.__validate_integer(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity"))
         data["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding")
+                self.__validate_decimal(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"))
         data["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract")
+                self.__validate_date(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract"))
         data["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate")
+                self.__validate_date(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate"))
         data["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate")
+                self.__validate_date(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate"))
         data["DateOfIntimationToCompany"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="DateOfIntimationToCompany")
+                self.__validate_date(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="DateOfIntimationToCompany"))
         data["TypeOfContract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="TypeOfContract")
@@ -269,26 +282,26 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="BuyAbstract")
         data["BuyNotionalValue"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="BuyNotionalValue")
+                self.__validate_decimal(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="BuyNotionalValue"))
         data["BuyNumberOfUnits"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="BuyNumberOfUnits")
+                self.__validate_integer(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="BuyNumberOfUnits"))
         data["SellAbstract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="SellAbstract")
         data["NotionalValue"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="NotionalValue")
+                self.__validate_decimal(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="NotionalValue"))
         data["NumberOfUnits"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="NumberOfUnits")
+                self.__validate_integer(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="NumberOfUnits"))
         data["ExchangeOnWhichTheTradeWasExecuted"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="ExchangeOnWhichTheTradeWasExecuted")
         data["TotalValueInAggregate"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="ValueInAggregate")
+                self.__validate_decimal(self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="ValueInAggregate"))
         data["NameOfTheSignatory"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="NameOfTheSignatory")
@@ -313,8 +326,14 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         data["Currency"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="Currency")
+        data["IsOrphan"] = self.__get_is_orphan_info()
         data["DownloadDate"] = self.__insert_date
         return data
+
+    def __get_is_orphan_info(self) -> str:
+        if self.__xbrl_processor.get_orphan_transaction_status():
+            return "Y"
+        return "N"
 
     @staticmethod
     def __check_if_isin_data_available(isin_data: str) -> str:
@@ -326,3 +345,55 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         if isin_data:
             return "Y"
         return "N"
+
+    @staticmethod
+    def __validate_date(date_string: str) -> str | None:
+        if date_string is None:
+            return None
+        try:
+            if bool(parser.parse(date_string)):
+                return date_string
+        except ValueError:
+            return None
+
+    @staticmethod
+    def __validate_integer(number_string: str) -> str | None:
+        if number_string is None:
+            return None
+        if number_string.isdigit():
+            return number_string
+        return None
+
+    @staticmethod
+    def __validate_decimal(number_string: str) -> str | None:
+        if number_string is None:
+            return None
+        try:
+            if float(number_string) or number_string.isdigit():
+                return number_string
+        except ValueError as e:
+            return None
+
+    def __set_xbrl_document_download_start_time(self) -> None:
+        if self.__xbrl_document_download_start_time is None:
+            self.__xbrl_document_download_start_time = (
+                datetime.datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"))
+
+    def __set_xbrl_document_download_end_time(self) -> None:
+        if self.__xbrl_document_download_start_time is not None:
+            self.__xbrl_document_download_end_time = datetime.datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+    def get_xbrl_document_download_start_time(self) -> str:
+        return self.__xbrl_document_download_start_time
+
+    def get_xbrl_document_download_end_time(self) -> str:
+        return self.__xbrl_document_download_end_time
+
+    def get_xbrl_document_page_visit_attempt_count(self) -> int:
+        return self.__xbrl_downloader.get_xbrl_document_page_visit_attempt_count()
+
+    def get_xbrl_document_download_success_count(self) -> int:
+        return self.__xbrl_downloader.get_xbrl_document_download_success_count()
+
+    def get_xbrl_document_download_error_count(self) -> int:
+        return self.__xbrl_downloader.get_xbrl_document_download_error_count()
