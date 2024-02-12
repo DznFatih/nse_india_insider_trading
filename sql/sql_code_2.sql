@@ -1,93 +1,4 @@
 
-
-drop table if exists dbo.NSEDataBulkInsert
-CREATE TABLE dbo.NSEDataBulkInsert(
-	AcquisitionMode	nvarchar(200)	Null,
-	AcquisitionfromDate	nvarchar(200)	Null,
-	AcquisitionToDate	nvarchar(200)	Null,
-	AfterAcquisitionSharesNo	nvarchar(200)	Null,
-	AfterAcquisitionSharesPercentage	nvarchar(200)	Null,
-	BeforeAcquisitionSharesNo	nvarchar(200)	Null,
-	BeforeAcquisitionSharesPercentage	nvarchar(200)	Null,
-	BuyQuantity	nvarchar(200)	Null,
-	BuyValue	nvarchar(200)	Null,
-	DerivativeType	nvarchar(200)	Null,
-	Did	nvarchar(200)	Null,
-	Exchange	nvarchar(200)	Null,
-	IntimDate	nvarchar(200)	Null,
-	PID	nvarchar(200)	Null,
-	Remarks	nvarchar(200)	Null,
-	SecuritiesValue	nvarchar(200)	Null,
-	SecuritiesTypePost	nvarchar(200)	Null,
-	SellValue	nvarchar(200)	Null,
-	TDPDerivativeContractType	nvarchar(200)	Null,
-	TKDAcqm	nvarchar(200)	Null,
-	Symbol nvarchar(50) NULL,
-	CompanyName nvarchar(200) NULL,
-	Regulation varchar(20) NULL,
-	NameOfTheAcquirerORDisposer nvarchar(500) NULL,
-	TypeOfSecurity nvarchar(200) NULL,
-	NoOfSecurities int NULL,
-	AcquisitionORDisposal nvarchar(200) NULL,
-	BroadcastDateTime datetime2(7) NULL,
-	XBRLLink varchar(250) NULL,
-	Period date NULL,
-	ScripCode varchar(20) NULL,
-	NSESymbol nvarchar(200) NULL,
-	MSEISymbol nvarchar(200) NULL,
-	NameOfTheCompany nvarchar(400) NULL,
-	WhetherISINAvailable varchar(200) NULL,
-	ISINCode nvarchar(200) NULL,
-	RevisedFilling nvarchar(200) NULL,
-	DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract nvarchar(200) NULL,
-	DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTable nvarchar(200) NULL,
-	ChangeInHoldingOfSecuritiesOfPromotersAxis nvarchar(200) NULL,
-	DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems nvarchar(200) NULL,
-	TypeOfInstrumentOthers nvarchar(200) NULL,
-	TypeOfInstrument nvarchar(200) NULL,
-	CategoryOfPerson nvarchar(200) NULL,
-	NameOfThePerson nvarchar(500) NULL,
-	PANNumber nvarchar(1) NULL,
-	IdentificationNumberOfDirectorOrCompany nvarchar(200) NULL,
-	Address nvarchar(200) NULL,
-	ContactNumber nvarchar(200) NULL,
-	SecuritiesHeldPriorToAcquisitionOrDisposalAbstract nvarchar(200) NULL,
-	SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity varchar(300) NULL,
-	SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding varchar(300) NULL,
-	SecuritiesAcquiredOrDisposedAbstract nvarchar(200) NULL,
-	SecuritiesAcquiredOrDisposedNumberOfSecurity varchar(300) NULL,
-	SecuritiesAcquiredOrDisposedValueOfSecurity varchar(300) NULL,
-	SecuritiesAcquiredOrDisposedTransactionType nvarchar(200) NULL,
-	SecuritiesHeldPostAcquistionOrDisposalAbstract nvarchar(200) NULL,
-	SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity nvarchar(200) NULL,
-	SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding nvarchar(200) NULL,
-	DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract nvarchar(200) NULL,
-	DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate date NULL,
-	DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate date NULL,
-	DateOfIntimationToCompany date NULL,
-	TypeOfContract nvarchar(200) NULL,
-	ContractSpecification nvarchar(200) NULL,
-	BuyAbstract nvarchar(200) NULL,
-	BuyNotionalValue nvarchar(200) NULL,
-	BuyNumberOfUnits nvarchar(200) NULL,
-	SellAbstract nvarchar(200) NULL,
-	NotionalValue nvarchar(200) NULL,
-	NumberOfUnits varchar(200) NULL,
-	ExchangeOnWhichTheTradeWasExecuted varchar(200) NULL,
-	TotalValueInAggregate varchar(200) NULL,
-	NameOfTheSignatory nvarchar(200) NULL,
-	DesignationOfSignatory nvarchar(200) NULL,
-	Place nvarchar(200) NULL,
-	DateOfFiling nvarchar(200) NULL,
-	DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock nvarchar(200) NULL,
-	ModeOfAcquisitionOrDisposal nvarchar(200) NULL,
-	GeneralInformationAbstract nvarchar(200) NULL,
-	Currency nvarchar(200) NULL,
-    IsOrphan	varchar(10)	Not Null,
-	DownloadDate datetime NULL
-)
-
-
 drop table if exists dbo.NSEDataCleaned
 create table dbo.NSEDataCleaned (
     ID int IDENTITY(1, 1) NOT NULL,
@@ -180,10 +91,11 @@ create table dbo.NSEDataCleaned (
 )
 
 
-
-drop table if exists dbo.PythonETLStatistics
-create table dbo.PythonETLStatistics (
-    PythonScriptExecutionStartTime varchar(200) NOT NULL,
+drop table if exists dbo.ETLStatistics
+create table dbo.ETLStatistics
+ (
+	ID int IDENTITY(1,1) NOT NULL,
+	PythonScriptExecutionStartTime varchar(200) NOT NULL,
     DataDescription	varchar(200)	Null,
 	NSESearchPageVisitTime	varchar(200)	Null,
 	XBRLDocumentDownloadsStartTime	varchar(200)	Null,
@@ -191,14 +103,6 @@ create table dbo.PythonETLStatistics (
 	XBRLDocumentPageVisitAttemptCount	varchar(200)	Null,
 	XBRLDocumentDownloadErrorCount	varchar(200)	Null,
 	XBRLDocumentDownloadSuccessCount	varchar(200)	Null,
-	DocumentDownloadErrors NVARCHAR(MAX) Null
-);
-
-
-drop table if exists dbo.SQLETLStatisticts
-create table dbo.SQLETLStatisticts
- (
-	ID int IDENTITY(1,1) NOT NULL,
 	SQLETLStartTime DATETIME NOT NULL,
 	RowsBulkInserted int NOT NULL,
 	PreviouslyInsertedRowsUpdated  int NOT NULL,
@@ -214,10 +118,16 @@ create table dbo.SQLETLStatisticts
 
 
 ----------------------------------------------------------- SP_SQLETLStatisticts Procedure
-
-
-
-CREATE  or ALTER PROCEDURE dbo.SP_SQLETLStatisticts @SQLETLStartTime DateTime,
+CREATE  or ALTER PROCEDURE dbo.SP_ETLStatistics
+											@PythonScriptExecutionStartTime varchar(200),
+											@DataDescription	varchar(200),
+											@NSESearchPageVisitTime	varchar(200),
+											@XBRLDocumentDownloadsStartTime	varchar(200),
+											@XBRLDocumentDownloadsEndTime	varchar(200),
+											@XBRLDocumentPageVisitAttemptCount	varchar(200),
+											@XBRLDocumentDownloadErrorCount	varchar(200),
+											@XBRLDocumentDownloadSuccessCount int,
+											@SQLETLStartTime DateTime,
 											@RowsBulkInserted int,
 											@PreviouslyInsertedRowsUpdated int,
 											@NewRecordsInserted int,
@@ -227,8 +137,17 @@ CREATE  or ALTER PROCEDURE dbo.SP_SQLETLStatisticts @SQLETLStartTime DateTime,
 AS
 BEGIN
 
-	Insert into dbo.SQLETLStatisticts
-		(SQLETLStartTime,
+	Insert into dbo.ETLStatistics
+		(
+		PythonScriptExecutionStartTime,
+		DataDescription,
+		NSESearchPageVisitTime,
+		XBRLDocumentDownloadsStartTime,
+		XBRLDocumentDownloadsEndTime,
+		XBRLDocumentPageVisitAttemptCount,
+		XBRLDocumentDownloadErrorCount,
+		XBRLDocumentDownloadSuccessCount,
+		SQLETLStartTime,
 		RowsBulkInserted,
 		PreviouslyInsertedRowsUpdated,
 		NewRecordsInserted,
@@ -236,10 +155,9 @@ BEGIN
 		NumberOfRecordsInDestinationTableAfterExecution,
 		ErrorMessage)
 	values
-		(@SQLETLStartTime, @RowsBulkInserted, @PreviouslyInsertedRowsUpdated, @NewRecordsInserted, @SQLETLFinishTime, @NumberOfRecordsInDestinationTableAfterExecution, @ErrorMessage)
+		(@PythonScriptExecutionStartTime, @DataDescription, @NSESearchPageVisitTime, @XBRLDocumentDownloadsStartTime, @XBRLDocumentDownloadsEndTime, @XBRLDocumentPageVisitAttemptCount, @XBRLDocumentDownloadErrorCount,
+		 @XBRLDocumentDownloadSuccessCount, @SQLETLStartTime, @RowsBulkInserted, @PreviouslyInsertedRowsUpdated, @NewRecordsInserted, @SQLETLFinishTime, @NumberOfRecordsInDestinationTableAfterExecution, @ErrorMessage)
 END
-
-
 
 --========================================================================================================================================================================
 --========================================================================================================================================================================
@@ -254,12 +172,26 @@ create or alter procedure dbo.SP_NSEDatainsert @folder_path varchar(100)
 AS
 BEGIN
 
-	--DECLARE @folder_path NVARCHAR(max) = 'C:\Users\dznfa\OneDrive\Desktop\NSETrading\app\XBRL Files\10022024103954';
+	--Declare @folder_path varchar(400) = 'C:\Users\dznfa\OneDrive\Desktop\NSETrading\app\XBRLFiles\11022024092527'
+
+	/*
+		Declare variables
+	*/
 
 	DECLARE @python_etl_stat_file_name NVARCHAR(max) = 'metadata.txt';
 	DECLARE @nse_data_bulk_file_name NVARCHAR(max) = 'NSEData.txt';
 	DECLARE @python_etl_stat_file_path NVARCHAR(max) = @folder_path + '/' + @python_etl_stat_file_name;
 	DECLARE @nse_data_bulk_file_path NVARCHAR(max) = @folder_path + '/' + @nse_data_bulk_file_name;
+
+	DECLARE @PythonScriptExecutionStartTime varchar(200);
+	DECLARE @DataDescription	varchar(200);
+	DECLARE @NSESearchPageVisitTime	varchar(200);
+	DECLARE @XBRLDocumentDownloadsStartTime	varchar(200);
+	DECLARE @XBRLDocumentDownloadsEndTime	varchar(200);
+	DECLARE @XBRLDocumentPageVisitAttemptCount	varchar(200);
+	DECLARE @XBRLDocumentDownloadErrorCount	varchar(200);
+	DECLARE @XBRLDocumentDownloadSuccessCount int;
+
 	declare @SQLETLStartTime datetime = (Select GETDATE())
 	declare @RowsBulkInserted int = 0;
 	declare @PreviouslyInsertedRowsUpdated int = 0;
@@ -268,11 +200,115 @@ BEGIN
 	declare @NumberOfRecordsInDestinationTableAfterExecution int = (Select count(1) from dbo.NSEDataCleaned);
 	DECLARE @ErrorMessage NVARCHAR(max);
 
+
+	/*
+		Temporary table to hold bulk inserted data from txt file.
+	*/
+	drop table if exists #NSEDataBulkInsert;
+	CREATE TABLE #NSEDataBulkInsert(
+		AcquisitionMode	nvarchar(200)	Null,
+		AcquisitionfromDate	nvarchar(200)	Null,
+		AcquisitionToDate	nvarchar(200)	Null,
+		AfterAcquisitionSharesNo	nvarchar(200)	Null,
+		AfterAcquisitionSharesPercentage	nvarchar(200)	Null,
+		BeforeAcquisitionSharesNo	nvarchar(200)	Null,
+		BeforeAcquisitionSharesPercentage	nvarchar(200)	Null,
+		BuyQuantity	nvarchar(200)	Null,
+		BuyValue	nvarchar(200)	Null,
+		DerivativeType	nvarchar(200)	Null,
+		Did	nvarchar(200)	Null,
+		Exchange	nvarchar(200)	Null,
+		IntimDate	nvarchar(200)	Null,
+		PID	nvarchar(200)	Null,
+		Remarks	nvarchar(200)	Null,
+		SecuritiesValue	nvarchar(200)	Null,
+		SecuritiesTypePost	nvarchar(200)	Null,
+		SellValue	nvarchar(200)	Null,
+		TDPDerivativeContractType	nvarchar(200)	Null,
+		TKDAcqm	nvarchar(200)	Null,
+		Symbol nvarchar(50) NULL,
+		CompanyName nvarchar(200) NULL,
+		Regulation varchar(20) NULL,
+		NameOfTheAcquirerORDisposer nvarchar(500) NULL,
+		TypeOfSecurity nvarchar(200) NULL,
+		NoOfSecurities int NULL,
+		AcquisitionORDisposal nvarchar(200) NULL,
+		BroadcastDateTime datetime2(7) NULL,
+		XBRLLink varchar(250) NULL,
+		Period date NULL,
+		ScripCode varchar(20) NULL,
+		NSESymbol nvarchar(200) NULL,
+		MSEISymbol nvarchar(200) NULL,
+		NameOfTheCompany nvarchar(400) NULL,
+		WhetherISINAvailable varchar(200) NULL,
+		ISINCode nvarchar(200) NULL,
+		RevisedFilling nvarchar(200) NULL,
+		DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract nvarchar(200) NULL,
+		DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTable nvarchar(200) NULL,
+		ChangeInHoldingOfSecuritiesOfPromotersAxis nvarchar(200) NULL,
+		DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems nvarchar(200) NULL,
+		TypeOfInstrumentOthers nvarchar(200) NULL,
+		TypeOfInstrument nvarchar(200) NULL,
+		CategoryOfPerson nvarchar(200) NULL,
+		NameOfThePerson nvarchar(500) NULL,
+		PANNumber nvarchar(1) NULL,
+		IdentificationNumberOfDirectorOrCompany nvarchar(200) NULL,
+		Address nvarchar(200) NULL,
+		ContactNumber nvarchar(200) NULL,
+		SecuritiesHeldPriorToAcquisitionOrDisposalAbstract nvarchar(200) NULL,
+		SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity varchar(300) NULL,
+		SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding varchar(300) NULL,
+		SecuritiesAcquiredOrDisposedAbstract nvarchar(200) NULL,
+		SecuritiesAcquiredOrDisposedNumberOfSecurity varchar(300) NULL,
+		SecuritiesAcquiredOrDisposedValueOfSecurity varchar(300) NULL,
+		SecuritiesAcquiredOrDisposedTransactionType nvarchar(200) NULL,
+		SecuritiesHeldPostAcquistionOrDisposalAbstract nvarchar(200) NULL,
+		SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity nvarchar(200) NULL,
+		SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding nvarchar(200) NULL,
+		DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract nvarchar(200) NULL,
+		DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate date NULL,
+		DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate date NULL,
+		DateOfIntimationToCompany date NULL,
+		TypeOfContract nvarchar(200) NULL,
+		ContractSpecification nvarchar(200) NULL,
+		BuyAbstract nvarchar(200) NULL,
+		BuyNotionalValue nvarchar(200) NULL,
+		BuyNumberOfUnits nvarchar(200) NULL,
+		SellAbstract nvarchar(200) NULL,
+		NotionalValue nvarchar(200) NULL,
+		NumberOfUnits varchar(200) NULL,
+		ExchangeOnWhichTheTradeWasExecuted varchar(200) NULL,
+		TotalValueInAggregate varchar(200) NULL,
+		NameOfTheSignatory nvarchar(200) NULL,
+		DesignationOfSignatory nvarchar(200) NULL,
+		Place nvarchar(200) NULL,
+		DateOfFiling nvarchar(200) NULL,
+		DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock nvarchar(200) NULL,
+		ModeOfAcquisitionOrDisposal nvarchar(200) NULL,
+		GeneralInformationAbstract nvarchar(200) NULL,
+		Currency nvarchar(200) NULL,
+		IsOrphan	varchar(10)	Not Null,
+		DownloadDate datetime NULL
+	);
+
+	drop table if exists #PythonETLStatistics
+	create table #PythonETLStatistics (
+		PythonScriptExecutionStartTime varchar(200) NOT NULL,
+		DataDescription	varchar(200)	Null,
+		NSESearchPageVisitTime	varchar(200)	Null,
+		XBRLDocumentDownloadsStartTime	varchar(200)	Null,
+		XBRLDocumentDownloadsEndTime	varchar(200)	Null,
+		XBRLDocumentPageVisitAttemptCount	varchar(200)	Null,
+		XBRLDocumentDownloadErrorCount	varchar(200)	Null,
+		XBRLDocumentDownloadSuccessCount	varchar(200)	Null
+	);
+
+
 	/*
 		Dynamic query to run later. We concatinate bulk insert sql statement with file path.
 	*/
 
-	Declare @sql_nse_data_bulk nvarchar(500) = 'bulk insert dbo.NSEDataBulkInsert
+	Declare @sql_nse_data_bulk nvarchar(500) = 'bulk insert #NSEDataBulkInsert
 								  from ''' +  @nse_data_bulk_file_path + '''
 								  with
 								  (
@@ -283,7 +319,7 @@ BEGIN
 										ROWTERMINATOR = ''\n''
 								   )'
 
-    Declare @sql_python_stats nvarchar(500) = 'bulk insert dbo.PythonETLStatistics
+    Declare @sql_python_stats nvarchar(500) = 'bulk insert #PythonETLStatistics
 									  from ''' +  @python_etl_stat_file_path + '''
 									  with
 									  (
@@ -293,9 +329,6 @@ BEGIN
 											MAXERRORS = 10,
 											ROWTERMINATOR = ''\n''
 									   )'
-
-	truncate table dbo.NSEDataBulkInsert;
-	truncate table dbo.PythonETLStatistics;
 
 
 BEGIN TRY
@@ -312,7 +345,7 @@ BEGIN TRY
 		Row count of bulk insert data into dbo.NSEDataBulkInsert. This is for SQL ETL statistics table.
 	*/
 
-	Set @RowsBulkInserted = (Select count(1) from dbo.NSEDataBulkInsert)
+	Set @RowsBulkInserted = (Select count(1) from #NSEDataBulkInsert)
 
 	/*
 		Delete temporary table if it exists
@@ -411,7 +444,7 @@ BEGIN TRY
 		,GETDATE() as InsertDate
 		,GETDATE() as UpdateDate
 	into dbo.temp_update_table
-	from dbo.NSEDataBulkInsert
+	from #NSEDataBulkInsert
 
 	-- UPDATE DATA
 
@@ -613,11 +646,30 @@ BEGIN TRY
 
 	drop table if exists dbo.temp_update_table;
 
+	/*
+		Set values for ETL statisticts
+
+	*/
+
 	set @SQLETLFinishTime = (Select GETDATE())
-
 	set @NumberOfRecordsInDestinationTableAfterExecution = (Select count(1) from dbo.NSEDataCleaned)
+	set @PythonScriptExecutionStartTime = (Select PythonScriptExecutionStartTime from #PythonETLStatistics)
+	set @DataDescription = (Select DataDescription from #PythonETLStatistics)
+	set @NSESearchPageVisitTime = (Select NSESearchPageVisitTime from #PythonETLStatistics)
+	set @XBRLDocumentDownloadsStartTime = (Select XBRLDocumentDownloadsStartTime from #PythonETLStatistics)
+	set @XBRLDocumentDownloadsEndTime = (Select XBRLDocumentDownloadsEndTime from #PythonETLStatistics)
+	set @XBRLDocumentPageVisitAttemptCount = (Select XBRLDocumentPageVisitAttemptCount from #PythonETLStatistics)
+	set @XBRLDocumentDownloadErrorCount = (Select XBRLDocumentDownloadErrorCount from #PythonETLStatistics)
+	set @XBRLDocumentDownloadSuccessCount = (Select XBRLDocumentDownloadSuccessCount from #PythonETLStatistics)
 
-	exec dbo.SP_SQLETLStatisticts @SQLETLStartTime, @RowsBulkInserted, @PreviouslyInsertedRowsUpdated, @NewRecordsInserted, @SQLETLFinishTime, @NumberOfRecordsInDestinationTableAfterExecution, Null
+	/*
+		Insert values into ETLStatisticts table by calling SP_SQLETLStatisticts stored procedure
+
+	*/
+	exec dbo.SP_ETLStatistics @PythonScriptExecutionStartTime, @DataDescription, @NSESearchPageVisitTime, @XBRLDocumentDownloadsStartTime, @XBRLDocumentDownloadsEndTime,
+								  @XBRLDocumentPageVisitAttemptCount, @XBRLDocumentDownloadErrorCount, @XBRLDocumentDownloadSuccessCount,
+								  @SQLETLStartTime, @RowsBulkInserted, @PreviouslyInsertedRowsUpdated, @NewRecordsInserted, @SQLETLFinishTime,
+								  @NumberOfRecordsInDestinationTableAfterExecution, Null
 	COMMIT Transaction;
 END TRY
 
@@ -627,13 +679,14 @@ BEGIN CATCH
 	SELECT @ErrorMessage = ERROR_MESSAGE()
 	PRINT @ErrorMessage
 	set @SQLETLFinishTime = (Select GETDATE())
-	exec dbo.SP_SQLETLStatisticts @SQLETLStartTime, @RowsBulkInserted, @PreviouslyInsertedRowsUpdated, @NewRecordsInserted, @SQLETLFinishTime, @NumberOfRecordsInDestinationTableAfterExecution, @ErrorMessage
-
+	exec dbo.SP_ETLStatistics @PythonScriptExecutionStartTime, @DataDescription, @NSESearchPageVisitTime, @XBRLDocumentDownloadsStartTime, @XBRLDocumentDownloadsEndTime,
+								  @XBRLDocumentPageVisitAttemptCount, @XBRLDocumentDownloadErrorCount, @XBRLDocumentDownloadSuccessCount,
+								  @SQLETLStartTime, @RowsBulkInserted, @PreviouslyInsertedRowsUpdated, @NewRecordsInserted, @SQLETLFinishTime,
+								  @NumberOfRecordsInDestinationTableAfterExecution, @ErrorMessage
     IF @@TRANCOUNT > 0
         ROLLBACK TRANSACTION;
 END CATCH;
 end
-
 /*
 
 exec dbo.SP_NSEDatainsert 'C:\Users\dznfa\OneDrive\Desktop\NSETrading\app\XBRL Files\10022024103954'

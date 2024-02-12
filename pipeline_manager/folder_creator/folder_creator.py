@@ -10,7 +10,7 @@ class XBRLFolderCreator(FolderCreator):
         Creates folder for storing XBRL files and data files and provides access to folder path.
         It creates a folder called 'XBRL Files' in current working directory
         """
-        self.__xbrl_parent_directory: Path = Path.cwd() / "XBRL Files"
+        self.__xbrl_parent_directory: Path = Path.cwd() / "XBRLFiles"
         self.__xbrl_sub_directory: Path = Path()
         self.__xbrl_file_loc: Path = Path()
         self.__current_date_time = datetime.datetime.now()
