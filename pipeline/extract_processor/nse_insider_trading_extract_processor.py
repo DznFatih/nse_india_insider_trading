@@ -17,7 +17,7 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         """
         Collects data and splits them into two files: cleaned_data and orphan_cleaned_data.
         cleaned_data has transaction data from the table visible in webpage and data from XBRL file.
-        orphan_cleaned_data has transaction data from the table and it has XBRL file attached to but the transaction
+        orphan_cleaned_data has transaction data from the table, and it has XBRL file attached to but the transaction
         was not identified in the xbrl file. Therefore, these transactions will have a link to their XBRL file but
         will not have any data from it.
         :param primary_source_data_key_name: Used to deserialize data received in process_data function
@@ -27,6 +27,7 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         self.__primary_source_data_key_name: str = primary_source_data_key_name
         self.__raw_data: list[dict] = list()
         self.__cleaned_data: list[dict] = list()
+        self.__changed_data: list[dict] = list()
         self.__insert_date: datetime = datetime.datetime.strptime(
                                                             datetime.datetime.now(timezone.utc).
                                                             strftime("%Y-%m-%d %H:%M:%S"), '%Y-%m-%d %H:%M:%S')
@@ -36,6 +37,66 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         self.__xbrl_folder_path: Path = Path()
         self.__xbrl_document_download_start_time: str = None
         self.__xbrl_document_download_end_time: str = None
+        self.__config = {
+                        "AcquisitionfromDate": self.__validate_date,
+                        "AcquisitionToDate": self.__validate_date,
+                        "IntimDate": self.__validate_date,
+                        "BroadcastDateTime": self.__validate_date,
+                        "Period": self.__validate_date,
+                        "DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract": self.__validate_date,
+                        "DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate": self.__validate_date,
+                        "DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate": self.__validate_date,
+                        "DateOfIntimationToCompany": self.__validate_date,
+                        "AfterAcquisitionSharesPercentage": self.__validate_decimal,
+                        "BeforeAcquisitionSharesPercentage": self.__validate_decimal,
+                        "SecuritiesValue": self.__validate_decimal,
+                        "SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding": self.__validate_decimal,
+                        "SecuritiesAcquiredOrDisposedValueOfSecurity": self.__validate_decimal,
+                        "SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding": self.__validate_decimal,
+                        "BuyNotionalValue": self.__validate_decimal,
+                        "NotionalValue": self.__validate_decimal,
+                        "TotalValueInAggregate": self.__validate_decimal,
+                        "BuyQuantity": self.__validate_integer,
+                        "BuyValue": self.__validate_integer,
+                        "Did": self.__validate_integer,
+                        "PID": self.__validate_integer,
+                        "SellValue": self.__validate_integer,
+                        "NoOfSecurities": self.__validate_integer,
+                        "SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity": self.__validate_integer,
+                        "SecuritiesAcquiredOrDisposedNumberOfSecurity": self.__validate_integer,
+                        "SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity": self.__validate_integer,
+                        "BuyNumberOfUnits": self.__validate_integer,
+                        "NumberOfUnits": self.__validate_integer}
+        self.__column_list_for_capturing_change_data: list[str] = [
+                            "AcquisitionfromDate",
+                            "AcquisitionToDate",
+                            "AfterAcquisitionSharesPercentage",
+                            "BeforeAcquisitionSharesPercentage",
+                            "BuyQuantity",
+                            "BuyValue",
+                            "Did",
+                            "IntimDate",
+                            "PID",
+                            "SecuritiesValue",
+                            "SellValue",
+                            "NoOfSecurities",
+                            "BroadcastDateTime",
+                            "Period",
+                            "SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity",
+                            "SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding",
+                            "SecuritiesAcquiredOrDisposedNumberOfSecurity",
+                            "SecuritiesAcquiredOrDisposedValueOfSecurity",
+                            "SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity",
+                            "SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding",
+                            "DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract",
+                            "DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate",
+                            "DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate",
+                            "DateOfIntimationToCompany",
+                            "BuyNotionalValue",
+                            "BuyNumberOfUnits",
+                            "NotionalValue",
+                            "NumberOfUnits",
+                            "TotalValueInAggregate"]
 
     def get_cleaned_data(self) -> list[dict]:
         """
@@ -43,6 +104,9 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         :return: Returns clean data
         """
         return self.__cleaned_data
+
+    def get_changed_data(self) -> list[dict]:
+        return self.__changed_data
 
     def get_cleaned_row_count(self) -> int:
         return len(self.__cleaned_data)
@@ -97,12 +161,12 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         :return:
         """
         for item in self.__raw_data:
-            # if item["did"] != '493201':
-            #     continue
             self.__xbrl_processor.set_transaction_status_to_default()
             self.__handle_xbrl_transaction_status(dict_data=item)
-            data: dict = self.__get_data(dict_data=item)
-            self.__cleaned_data.append(data)
+            original_data: dict = self.__get_data(dict_data=item)
+            updated_data: dict = self.__replace_invalid_value(dict_data=original_data)
+            self.__capture_changed_data(original_data=original_data, updated_data=updated_data)
+            self.__cleaned_data.append(original_data)
         self.__set_xbrl_document_download_end_time()
 
     def __handle_xbrl_transaction_status(self, dict_data: dict) -> None:
@@ -149,23 +213,23 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         data: dict = dict()
 
         data["AcquisitionMode"] = dict_data.get("acqMode")
-        data["AcquisitionfromDate"] = self.__validate_date(dict_data.get("acqfromDt"))
-        data["AcquisitionToDate"] = self.__validate_date(dict_data.get("acqtoDt"))
+        data["AcquisitionfromDate"] = dict_data.get("acqfromDt")
+        data["AcquisitionToDate"] = dict_data.get("acqtoDt")
         data["AfterAcquisitionSharesNo"] = dict_data.get("afterAcqSharesNo")
-        data["AfterAcquisitionSharesPercentage"] = self.__validate_decimal(dict_data.get("afterAcqSharesPer"))
+        data["AfterAcquisitionSharesPercentage"] = dict_data.get("afterAcqSharesPer")
         data["BeforeAcquisitionSharesNo"] = dict_data.get("befAcqSharesNo")
-        data["BeforeAcquisitionSharesPercentage"] = self.__validate_decimal(dict_data.get("befAcqSharesPer"))
-        data["BuyQuantity"] = self.__validate_integer(dict_data.get("buyQuantity"))
-        data["BuyValue"] = self.__validate_decimal(dict_data.get("buyValue"))
+        data["BeforeAcquisitionSharesPercentage"] = dict_data.get("befAcqSharesPer")
+        data["BuyQuantity"] = dict_data.get("buyQuantity")
+        data["BuyValue"] = dict_data.get("buyValue")
         data["DerivativeType"] = dict_data.get("derivativeType")
         data["Did"] = dict_data.get("did")
         data["Exchange"] = dict_data.get("exchange")
-        data["IntimDate"] = self.__validate_date(dict_data.get("intimDt"))
-        data["PID"] = self.__validate_integer(dict_data.get("pid"))
+        data["IntimDate"] = dict_data.get("intimDt")
+        data["PID"] = dict_data.get("pid")
         data["Remarks"] = dict_data.get("remarks")
-        data["SecuritiesValue"] = self.__validate_decimal(dict_data.get("secVal"))
+        data["SecuritiesValue"] = dict_data.get("secVal")
         data["SecuritiesTypePost"] = dict_data.get("securitiesTypePost")
-        data["SellValue"] = self.__validate_decimal(dict_data.get("sellValue"))
+        data["SellValue"] = dict_data.get("sellValue")
         data["TDPDerivativeContractType"] = dict_data.get("tdpDerivativeContractType")
         data["TKDAcqm"] = dict_data.get("tkdAcqm")
         data["Symbol"] = dict_data.get("symbol")
@@ -173,13 +237,13 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         data["Regulation"] = dict_data.get("anex")
         data["NameOfTheAcquirerORDisposer"] = dict_data.get("acqName")
         data["TypeOfSecurity"] = dict_data.get("secType")
-        data["NoOfSecurities"] = self.__validate_integer(dict_data.get("secAcq"))
+        data["NoOfSecurities"] = dict_data.get("secAcq")
         data["AcquisitionORDisposal"] = dict_data.get("tdpTransactionType")
-        data["BroadcastDateTime"] = self.__validate_date(dict_data.get("date"))
+        data["BroadcastDateTime"] = dict_data.get("date")
         data["XBRLLink"] = dict_data.get("xbrl")
-        data["Period"] = self.__validate_date(self.__xbrl_processor.process_xbrl_data_to_get_context_info(
+        data["Period"] = self.__xbrl_processor.process_xbrl_data_to_get_context_info(
                 parent_tag_name="context",
-                child_tag_name="period"))
+                child_tag_name="period")
         data["ScripCode"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
                 tag_to_search="BSEScripCode")
         data["NSESymbol"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
@@ -189,12 +253,9 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         data["NameOfTheCompany"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
                 tag_to_search="NameOfTheCompany")
         data["WhetherISINAvailable"] = self.__check_if_isin_data_available(
-            self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
-                tag_to_search="ISIN"))
-        data["ISINCode"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(
-                tag_to_search="ISIN")
-        data["RevisedFilling"] = self.__xbrl_processor.process_general_xbrl_data(
-                tag_name="RevisedFilling")
+            self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(tag_to_search="ISIN"))
+        data["ISINCode"] = self.__xbrl_processor.process_xbrl_data_to_get_text_from_single_tag(tag_to_search="ISIN")
+        data["RevisedFilling"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="RevisedFilling")
         data["DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract")
@@ -207,47 +268,33 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems")
         data["TypeOfInstrumentOthers"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="TypeOfInstrumentOthers")
-        data["TypeOfInstrument"] = \
-            self.__xbrl_processor.process_general_xbrl_data(
-                tag_name="TypeOfInstrument")
-        data["CategoryOfPerson"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="CategoryOfPerson")
-        data["NameOfThePerson"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="NameOfThePerson")
+                self.__xbrl_processor.process_general_xbrl_data(tag_name="TypeOfInstrumentOthers")
+        data["TypeOfInstrument"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="TypeOfInstrument")
+        data["CategoryOfPerson"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="CategoryOfPerson")
+        data["NameOfThePerson"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="NameOfThePerson")
         data["PANNumber"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="PANNumber")
+                self.__xbrl_processor.process_general_xbrl_data(tag_name="PANNumber")
         data["IdentificationNumberOfDirectorOrCompany"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="IdentificationNumberOfDirectorOrCompany")
+                self.__xbrl_processor.process_general_xbrl_data(tag_name="IdentificationNumberOfDirectorOrCompany")
         data["Address"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="Address")
+                self.__xbrl_processor.process_general_xbrl_data(tag_name="Address")
         data["ContactNumber"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="ContactNumber")
+                self.__xbrl_processor.process_general_xbrl_data(tag_name="ContactNumber")
         data["SecuritiesHeldPriorToAcquisitionOrDisposalAbstract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalAbstract")
         data["SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity"] = \
-                self.__validate_integer(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity"))
-        data["SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"] = \
-                self.__validate_decimal(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"))
-        data["SecuritiesAcquiredOrDisposedAbstract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SecuritiesAcquiredOrDisposedAbstract")
+                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity")
+        data["SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding"] = \
+                self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding")
+        data["SecuritiesAcquiredOrDisposedAbstract"] = \
+                self.__xbrl_processor.process_general_xbrl_data(tag_name="SecuritiesAcquiredOrDisposedAbstract")
         data["SecuritiesAcquiredOrDisposedNumberOfSecurity"] = \
-                self.__validate_integer(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SecuritiesAcquiredOrDisposedNumberOfSecurity"))
+                self.__xbrl_processor.process_general_xbrl_data(tag_name="SecuritiesAcquiredOrDisposedNumberOfSecurity")
         data["SecuritiesAcquiredOrDisposedValueOfSecurity"] = \
-                self.__validate_decimal(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SecuritiesAcquiredOrDisposedValueOfSecurity"))
+                self.__xbrl_processor.process_general_xbrl_data(tag_name="SecuritiesAcquiredOrDisposedValueOfSecurity")
         data["SecuritiesAcquiredOrDisposedTransactionType"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="SecuritiesAcquiredOrDisposedTransactionType")
@@ -255,80 +302,82 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="SecuritiesHeldPostAcquistionOrDisposalAbstract")
         data["SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity"] = \
-                self.__validate_integer(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity"))
+                self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity")
         data["SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"] = \
-                self.__validate_decimal(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding"))
+                self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding")
         data["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract"] = \
-                self.__validate_date(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract"))
+                self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract")
         data["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate"] = \
-                self.__validate_date(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate"))
+                self.__xbrl_processor.process_general_xbrl_data(
+                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate")
         data["DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate"] = \
-                self.__validate_date(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate"))
-        data["DateOfIntimationToCompany"] = \
-                self.__validate_date(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="DateOfIntimationToCompany"))
-        data["TypeOfContract"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="TypeOfContract")
-        data["ContractSpecification"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="ContractSpecification")
-        data["BuyAbstract"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="BuyAbstract")
-        data["BuyNotionalValue"] = \
-                self.__validate_decimal(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="BuyNotionalValue"))
-        data["BuyNumberOfUnits"] = \
-                self.__validate_integer(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="BuyNumberOfUnits"))
-        data["SellAbstract"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="SellAbstract")
-        data["NotionalValue"] = \
-                self.__validate_decimal(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="NotionalValue"))
-        data["NumberOfUnits"] = \
-                self.__validate_integer(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="NumberOfUnits"))
+                    tag_name="DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate")
+        data["DateOfIntimationToCompany"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="DateOfIntimationToCompany")
+        data["TypeOfContract"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="TypeOfContract")
+        data["ContractSpecification"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="ContractSpecification")
+        data["BuyAbstract"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="BuyAbstract")
+        data["BuyNotionalValue"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="BuyNotionalValue")
+        data["BuyNumberOfUnits"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="BuyNumberOfUnits")
+        data["SellAbstract"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="SellAbstract")
+        data["NotionalValue"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="NotionalValue")
+        data["NumberOfUnits"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="NumberOfUnits")
         data["ExchangeOnWhichTheTradeWasExecuted"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="ExchangeOnWhichTheTradeWasExecuted")
-        data["TotalValueInAggregate"] = \
-                self.__validate_decimal(self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="ValueInAggregate"))
-        data["NameOfTheSignatory"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="NameOfTheSignatory")
-        data["DesignationOfSignatory"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="DesignationOfSignatory")
-        data["Place"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="Place")
-        data["DateOfFiling"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="DateOfFiling")
+                self.__xbrl_processor.process_general_xbrl_data(tag_name="ExchangeOnWhichTheTradeWasExecuted")
+        data["TotalValueInAggregate"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="ValueInAggregate")
+        data["NameOfTheSignatory"] =self.__xbrl_processor.process_general_xbrl_data(tag_name="NameOfTheSignatory")
+        data["DesignationOfSignatory"] = self.__xbrl_processor.process_general_xbrl_data(
+            tag_name="DesignationOfSignatory")
+        data["Place"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="Place")
+        data["DateOfFiling"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="DateOfFiling")
         data["DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock"] = \
                 self.__xbrl_processor.process_general_xbrl_data(
                     tag_name="DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock")
         data["ModeOfAcquisitionOrDisposal"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="ModeOfAcquisitionOrDisposal")
-        data["GeneralInformationAbstract"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="GeneralInformationAbstract")
-        data["Currency"] = \
-                self.__xbrl_processor.process_general_xbrl_data(
-                    tag_name="Currency")
+                self.__xbrl_processor.process_general_xbrl_data(tag_name="ModeOfAcquisitionOrDisposal")
+        data["GeneralInformationAbstract"] = self.__xbrl_processor.process_general_xbrl_data(
+            tag_name="GeneralInformationAbstract")
+        data["Currency"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="Currency")
         data["IsOrphan"] = self.__get_is_orphan_info()
         data["DownloadDate"] = self.__insert_date
         return data
+
+    def __replace_invalid_value(self, dict_data: dict) -> dict:
+        """
+        Replaces invalid values such as "-" with None. This transformation makes it easier to process data in SQL.
+        It first creates temporary dictionary from the dict_data passed as its argument. This is necessary because
+        we do not want to update original dictionary values. Then It compares the keys against config to find fields
+        that need to be validated. When all fields are compared against config, it returns the new dictionary with
+        updated values
+        :param dict_data: Dictionary data
+        :return: dictionary
+        """
+        temp_dict = dict()
+        for key, value in dict_data.items():
+            temp_dict[key] = value
+
+        for key_data, value_data in temp_dict.items():
+            for key_config, value_config in self.__config.items():
+                if key_data != key_config:
+                    continue
+                dict_data[key_data] = value_config(value_data)
+                break
+        return temp_dict
+
+    def __capture_changed_data(self, original_data: dict, updated_data: dict) -> None:
+        for column_name in self.__column_list_for_capturing_change_data:
+            if original_data[column_name] == updated_data[column_name]:
+                continue
+
+            self.__changed_data.append({
+                "did": original_data["did"],
+                "field_name": column_name,
+                "from_value": original_data[column_name],
+                "to_value": updated_data[column_name]
+            })
 
     def __get_is_orphan_info(self) -> str:
         if self.__xbrl_processor.get_orphan_transaction_status():

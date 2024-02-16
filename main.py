@@ -34,6 +34,7 @@ def log_info_to_a_file(dict_data: dict) -> None:
 
 
 if __name__ == "__main__":
+    # TODO: Mention folder and files inside. What they will see in those files.
     """
         Entry point to the program. Creates NSEIndiaInsiderTradingExtractParameter object and passes it to 
         entity_base_initiator function for starting the workflow.

@@ -11,6 +11,10 @@ class EntityProcessor(ABC):
         pass
 
     @abstractmethod
+    def get_changed_data(self) -> list[dict]:
+        pass
+
+    @abstractmethod
     def get_cleaned_row_count(self) -> int:
         pass
 
