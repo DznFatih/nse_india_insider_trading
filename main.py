@@ -52,7 +52,7 @@ if __name__ == "__main__":
     log_info: dict = {}
     try:
         # date_format -> 'DD-MM-YYYY'
-        parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date="01-04-2015", to_date="01-04-2015")
+        parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date="01-01-2018", to_date="01-01-2018")
         entity_base_initiator(entity_parameter=parameter)
         log_info = {"content": "successful"}
         log_info_to_a_file(log_info)

@@ -23,11 +23,15 @@ class FileSaver(DataSaver):
         """
         try:
             if self.__data:
-                keys = self.__data[0].keys()
-                with open(folder_path_to_save_data / self.__file_name, "w", newline='', encoding="utf-8") as f:
-                    dict_writer = csv.DictWriter(f, keys, delimiter="^")
-                    dict_writer.writeheader()
-                    dict_writer.writerows(self.__data)
+                headers = list(self.__data[0].keys())
+                with open(folder_path_to_save_data / self.__file_name, "w", encoding="utf-8") as f:
+                    delimiter = 'þ'
+                    f.write(f"{delimiter}".join(headers))
+                    f.write("\n")
+                    for item in self.__data:
+                        values = list(item.values())
+                        f.write(f"{delimiter}".join(values))
+                        f.write("\n")
         except TypeError as e:
             raise TypeError(get_error_details(e))
         except KeyError as e:

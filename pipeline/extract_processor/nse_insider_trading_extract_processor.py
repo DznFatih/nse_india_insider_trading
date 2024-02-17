@@ -57,16 +57,69 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
                         "NotionalValue": self.__validate_decimal,
                         "TotalValueInAggregate": self.__validate_decimal,
                         "BuyQuantity": self.__validate_integer,
-                        "BuyValue": self.__validate_integer,
+                        "BuyValue": self.__validate_decimal,
                         "Did": self.__validate_integer,
                         "PID": self.__validate_integer,
-                        "SellValue": self.__validate_integer,
+                        "SellValue": self.__validate_decimal,
                         "NoOfSecurities": self.__validate_integer,
                         "SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity": self.__validate_integer,
                         "SecuritiesAcquiredOrDisposedNumberOfSecurity": self.__validate_integer,
                         "SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity": self.__validate_integer,
                         "BuyNumberOfUnits": self.__validate_integer,
-                        "NumberOfUnits": self.__validate_integer}
+                        "NumberOfUnits": self.__validate_integer,
+                        "AcquisitionMode": self.__validate_string,
+                        "AfterAcquisitionSharesNo": self.__validate_string,
+                        "BeforeAcquisitionSharesNo": self.__validate_string,
+                        "DerivativeType": self.__validate_string,
+                        "Exchange": self.__validate_string,
+                        "Remarks": self.__validate_string,
+                        "SecuritiesTypePost": self.__validate_string,
+                        "TDPDerivativeContractType": self.__validate_string,
+                        "TKDAcqm": self.__validate_string,
+                        "Symbol": self.__validate_string,
+                        "CompanyName": self.__validate_string,
+                        "Regulation": self.__validate_string,
+                        "NameOfTheAcquirerORDisposer": self.__validate_string,
+                        "TypeOfSecurity": self.__validate_string,
+                        "AcquisitionORDisposal": self.__validate_string,
+                        "XBRLLink": self.__validate_string,
+                        "ScripCode": self.__validate_string,
+                        "NSESymbol": self.__validate_string,
+                        "MSEISymbol": self.__validate_string,
+                        "NameOfTheCompany": self.__validate_string,
+                        "WhetherISINAvailable": self.__validate_string,
+                        "ISINCode": self.__validate_string,
+                        "RevisedFilling": self.__validate_string,
+                        "DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract": self.__validate_string,
+                        "DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTable": self.__validate_string,
+                        "ChangeInHoldingOfSecuritiesOfPromotersAxis": self.__validate_string,
+                        "DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems": self.__validate_string,
+                        "TypeOfInstrument": self.__validate_string,
+                        "TypeOfInstrumentOthers": self.__validate_string,
+                        "CategoryOfPerson": self.__validate_string,
+                        "NameOfThePerson": self.__validate_string,
+                        "PANNumber": self.__validate_string,
+                        "IdentificationNumberOfDirectorOrCompany": self.__validate_string,
+                        "Address": self.__validate_string,
+                        "ContactNumber": self.__validate_string,
+                        "SecuritiesHeldPriorToAcquisitionOrDisposalAbstract": self.__validate_string,
+                        "SecuritiesAcquiredOrDisposedAbstract": self.__validate_string,
+                        "SecuritiesAcquiredOrDisposedTransactionType": self.__validate_string,
+                        "SecuritiesHeldPostAcquistionOrDisposalAbstract": self.__validate_string,
+                        "TypeOfContract": self.__validate_string,
+                        "ContractSpecification": self.__validate_string,
+                        "BuyAbstract": self.__validate_string,
+                        "SellAbstract": self.__validate_string,
+                        "ExchangeOnWhichTheTradeWasExecuted": self.__validate_string,
+                        "NameOfTheSignatory": self.__validate_string,
+                        "DesignationOfSignatory": self.__validate_string,
+                        "Place": self.__validate_string,
+                        "DateOfFiling": self.__validate_string,
+                        "DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock": self.__validate_string,
+                        "ModeOfAcquisitionOrDisposal": self.__validate_string,
+                        "GeneralInformationAbstract": self.__validate_string,
+                        "Currency": self.__validate_string,
+                        "IsOrphan": self.__validate_string}
         self.__column_list_for_capturing_change_data: list[str] = [
                             "AcquisitionfromDate",
                             "AcquisitionToDate",
@@ -96,7 +149,60 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
                             "BuyNumberOfUnits",
                             "NotionalValue",
                             "NumberOfUnits",
-                            "TotalValueInAggregate"]
+                            "TotalValueInAggregate",
+                            "AcquisitionMode",
+                            "AfterAcquisitionSharesNo",
+                            "BeforeAcquisitionSharesNo",
+                            "DerivativeType",
+                            "Exchange",
+                            "Remarks",
+                            "SecuritiesTypePost",
+                            "TDPDerivativeContractType",
+                            "TKDAcqm",
+                            "Symbol",
+                            "CompanyName",
+                            "Regulation",
+                            "NameOfTheAcquirerORDisposer",
+                            "TypeOfSecurity",
+                            "AcquisitionORDisposal",
+                            "XBRLLink",
+                            "ScripCode",
+                            "NSESymbol",
+                            "MSEISymbol",
+                            "NameOfTheCompany",
+                            "WhetherISINAvailable",
+                            "ISINCode",
+                            "RevisedFilling",
+                            "DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract",
+                            "DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTable",
+                            "ChangeInHoldingOfSecuritiesOfPromotersAxis",
+                            "DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems",
+                            "TypeOfInstrument",
+                            "TypeOfInstrumentOthers",
+                            "CategoryOfPerson",
+                            "NameOfThePerson",
+                            "PANNumber",
+                            "IdentificationNumberOfDirectorOrCompany",
+                            "Address",
+                            "ContactNumber",
+                            "SecuritiesHeldPriorToAcquisitionOrDisposalAbstract",
+                            "SecuritiesAcquiredOrDisposedAbstract",
+                            "SecuritiesAcquiredOrDisposedTransactionType",
+                            "SecuritiesHeldPostAcquistionOrDisposalAbstract",
+                            "TypeOfContract",
+                            "ContractSpecification",
+                            "BuyAbstract",
+                            "SellAbstract",
+                            "ExchangeOnWhichTheTradeWasExecuted",
+                            "NameOfTheSignatory",
+                            "DesignationOfSignatory",
+                            "Place",
+                            "DateOfFiling",
+                            "DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock",
+                            "ModeOfAcquisitionOrDisposal",
+                            "GeneralInformationAbstract",
+                            "Currency",
+                            "IsOrphan"]
 
     def get_cleaned_data(self) -> list[dict]:
         """
@@ -166,7 +272,7 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
             original_data: dict = self.__get_data(dict_data=item)
             updated_data: dict = self.__replace_invalid_value(dict_data=original_data)
             self.__capture_changed_data(original_data=original_data, updated_data=updated_data)
-            self.__cleaned_data.append(original_data)
+            self.__cleaned_data.append(updated_data)
         self.__set_xbrl_document_download_end_time()
 
     def __handle_xbrl_transaction_status(self, dict_data: dict) -> None:
@@ -342,7 +448,7 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
             tag_name="GeneralInformationAbstract")
         data["Currency"] = self.__xbrl_processor.process_general_xbrl_data(tag_name="Currency")
         data["IsOrphan"] = self.__get_is_orphan_info()
-        data["DownloadDate"] = self.__insert_date
+        data["DownloadDate"] = str(self.__insert_date)
         return data
 
     def __replace_invalid_value(self, dict_data: dict) -> dict:
@@ -363,21 +469,28 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
             for key_config, value_config in self.__config.items():
                 if key_data != key_config:
                     continue
-                dict_data[key_data] = value_config(value_data)
+                temp_dict[key_data] = value_config(value_data)
                 break
         return temp_dict
 
     def __capture_changed_data(self, original_data: dict, updated_data: dict) -> None:
+        """
+        Captures changed data by comparing original data against updated data.
+        Note: There might be empty string replaced by None in the data. So this will also be considered data alteration.
+        ('' <> None)
+        :param original_data: dictionary
+        :param updated_data:
+        :return: None
+        """
         for column_name in self.__column_list_for_capturing_change_data:
             if original_data[column_name] == updated_data[column_name]:
                 continue
 
             self.__changed_data.append({
-                "did": original_data["did"],
+                "did": original_data["Did"],
                 "field_name": column_name,
-                "from_value": original_data[column_name],
-                "to_value": updated_data[column_name]
-            })
+                "from_value": str(original_data[column_name]),
+                "to_value": str(updated_data[column_name])})
 
     def __get_is_orphan_info(self) -> str:
         if self.__xbrl_processor.get_orphan_transaction_status():
@@ -396,32 +509,45 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         return "N"
 
     @staticmethod
-    def __validate_date(date_string: str) -> str | None:
+    def __validate_date(date_string: str) -> str:
         if date_string is None:
-            return None
+            return "-"
         try:
             if bool(parser.parse(date_string)):
-                return date_string
+                return str(date_string)
         except ValueError:
-            return None
+            return "-"
 
     @staticmethod
-    def __validate_integer(number_string: str) -> str | None:
+    def __validate_integer(number_string: str) -> str:
         if number_string is None:
-            return None
+            return "-"
         if number_string.isdigit():
-            return number_string
-        return None
+            return str(number_string)
+        return "-"
 
     @staticmethod
-    def __validate_decimal(number_string: str) -> str | None:
+    def __validate_decimal(number_string: str) -> str:
+        """
+        Validates whether the number is a decimal or integer data type. It adds 1 to the value to avoid False if the value
+        is 0.00 (if value == 0.00 statement returns False but if the value is different than that, then it returns True)
+        :param number_string:
+        :return:
+        """
         if number_string is None:
-            return None
+            return "-"
         try:
-            if float(number_string) or number_string.isdigit():
-                return number_string
+            converted_to_float = float(number_string) + 1
+            if converted_to_float or number_string.isdigit():
+                return str(number_string)
         except ValueError as e:
-            return None
+            return "-"
+
+    @staticmethod
+    def __validate_string(string_data: str) -> str:
+        if string_data is None:
+            return "-"
+        return str(string_data)
 
     def __set_xbrl_document_download_start_time(self) -> None:
         if self.__xbrl_document_download_start_time is None:

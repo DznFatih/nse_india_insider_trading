@@ -1,178 +1,8 @@
-
-drop table if exists dbo.NSEDataCleaned
-create table dbo.NSEDataCleaned (
-    ID int IDENTITY(1, 1) NOT NULL,
-    AcquisitionMode	varchar(250)	Null,
-	AcquisitionfromDate	Date	Null,
-	AcquisitionToDate	Date	Null,
-	AfterAcquisitionSharesNo	nvarchar(200)	Null,
-	AfterAcquisitionSharesPercentage	decimal(19,2)	Null,
-	BeforeAcquisitionSharesNo	nvarchar(200)	Null,
-	BeforeAcquisitionSharesPercentage	decimal(19,2)	Null,
-	BuyQuantity	bigint	Null,
-	BuyValue	decimal(19, 4)	Null,
-	DerivativeType	nvarchar(200)	Null,
-	Did	bigint	NOT Null,
-	Exchange	nvarchar(200)	Null,
-	IntimDate	Date	Null,
-	PID	bigint	Null,
-	Remarks	nvarchar(200)	Null,
-	SecuritiesValue	decimal(19,4)	Null,
-	SecuritiesTypePost	nvarchar(200)	Null,
-	SellValue	decimal(19, 4)	Null,
-	TDPDerivativeContractType	nvarchar(200)	Null,
-	TKDAcqm	nvarchar(200)	Null,
-    Symbol nvarchar(200) Null,
-    CompanyName nvarchar(200) Null,
-    Regulation varchar(200) Null,
-    NameOfTheAcquirerORDisposer nvarchar(500) Null,
-    TypeOfSecurity nvarchar(200) Null,
-    NoOfSecurities bigint Null,
-    AcquisitionORDisposal nvarchar(200) Null,
-    BroadcastDateTime DateTime Null,
-    XBRLLink varchar(250) Null,
-    Period Date Null,
-    ScripCode varchar(200) Null,
-    NSESymbol nvarchar(200) Null,
-    MSEISymbol nvarchar(200) Null,
-    NameOfTheCompany nvarchar(400) Null,
-    WhetherISINAvailable varchar(50) Null,
-    ISINCode nvarchar(50) Null,
-    RevisedFilling nvarchar(200) Null,
-    DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract nvarchar(200) Null,
-    DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTable nvarchar(200) Null,
-    ChangeInHoldingOfSecuritiesOfPromotersAxis nvarchar(200) Null,
-    DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems nvarchar(200) Null,
-    TypeOfInstrument nvarchar(200) Null,
-    TypeOfInstrumentOthers nvarchar(200) Null,
-    CategoryOfPerson nvarchar(200) Null,
-    NameOfThePerson nvarchar(500) Null,
-    PANNumber nvarchar(200) Null,
-    IdentificationNumberOfDirectorOrCompany nvarchar(200) Null,
-    Address nvarchar(200) Null,
-    ContactNumber nvarchar(200) Null,
-    SecuritiesHeldPriorToAcquisitionOrDisposalAbstract nvarchar(200) Null,
-    SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity bigint Null,
-    SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding decimal(19, 2) Null,
-    SecuritiesAcquiredOrDisposedAbstract nvarchar(200) Null,
-    SecuritiesAcquiredOrDisposedNumberOfSecurity bigint Null,
-    SecuritiesAcquiredOrDisposedValueOfSecurity decimal(19, 4) Null,
-    SecuritiesAcquiredOrDisposedTransactionType nvarchar(200) Null,
-    SecuritiesHeldPostAcquistionOrDisposalAbstract nvarchar(200) Null,
-    SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity bigint Null,
-    SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding decimal(19, 2) Null,
-    DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract Date Null,
-    DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate Date Null,
-    DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate Date Null,
-    DateOfIntimationToCompany Date Null,
-    TypeOfContract nvarchar(200) Null,
-    ContractSpecification nvarchar(200) Null,
-    BuyAbstract nvarchar(200) Null,
-    BuyNotionalValue decimal(19, 4) Null,
-    BuyNumberOfUnits bigint Null,
-    SellAbstract nvarchar(200) Null,
-    NotionalValue decimal(19, 4) Null,
-    NumberOfUnits bigint Null,
-    ExchangeOnWhichTheTradeWasExecuted varchar(200) Null,
-    TotalValueInAggregate decimal(19, 4) Null,
-    NameOfTheSignatory nvarchar(200) Null,
-    DesignationOfSignatory nvarchar(200) Null,
-    Place nvarchar(200) Null,
-    DateOfFiling nvarchar(200) Null,
-    DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock nvarchar(200) Null,
-    ModeOfAcquisitionOrDisposal nvarchar(200) Null,
-    GeneralInformationAbstract nvarchar(200) Null,
-    Currency nvarchar(200) Null,
-    IsOrphan	varchar(10)	Not Null,
-    UpdateDate Datetime Not Null,
-    InsertDate DateTime Not Null
-
-	, CONSTRAINT PK_NSEDataCleaned_DID PRIMARY KEY CLUSTERED (Did)
-)
-
-
-drop table if exists dbo.ETLStatistics
-create table dbo.ETLStatistics
- (
-	ID int IDENTITY(1,1) NOT NULL,
-	PythonScriptExecutionStartTime varchar(200) NOT NULL,
-    DataDescription	varchar(200)	Null,
-	NSESearchPageVisitTime	varchar(200)	Null,
-	XBRLDocumentDownloadsStartTime	varchar(200)	Null,
-	XBRLDocumentDownloadsEndTime	varchar(200)	Null,
-	XBRLDocumentPageVisitAttemptCount	varchar(200)	Null,
-	XBRLDocumentDownloadErrorCount	varchar(200)	Null,
-	XBRLDocumentDownloadSuccessCount	varchar(200)	Null,
-	SQLETLStartTime DATETIME NOT NULL,
-	RowsBulkInserted int NOT NULL,
-	PreviouslyInsertedRowsUpdated  int NOT NULL,
-	NewRecordsInserted int NOT NULL,
-	SQLETLFinishTime DATETIME NOT NULL,
-	NumberOfRecordsInDestinationTableAfterExecution int NOT NULL,
-	ErrorMessage NVARCHAR(MAX) Null
- );
-
---========================================================================================================================================================================
---========================================================================================================================================================================
---========================================================================================================================================================================
-
-
------------------------------------------------------------ SP_SQLETLStatisticts Procedure
-CREATE  or ALTER PROCEDURE dbo.SP_ETLStatistics
-											@PythonScriptExecutionStartTime varchar(200),
-											@DataDescription	varchar(200),
-											@NSESearchPageVisitTime	varchar(200),
-											@XBRLDocumentDownloadsStartTime	varchar(200),
-											@XBRLDocumentDownloadsEndTime	varchar(200),
-											@XBRLDocumentPageVisitAttemptCount	varchar(200),
-											@XBRLDocumentDownloadErrorCount	varchar(200),
-											@XBRLDocumentDownloadSuccessCount int,
-											@SQLETLStartTime DateTime,
-											@RowsBulkInserted int,
-											@PreviouslyInsertedRowsUpdated int,
-											@NewRecordsInserted int,
-											@SQLETLFinishTime datetime,
-											@NumberOfRecordsInDestinationTableAfterExecution int,
-											@ErrorMessage NVARCHAR(MAX)
+create or alter procedure dbo.SP_NSEDatainsert @folder_path varchar(500)
 AS
 BEGIN
 
-	Insert into dbo.ETLStatistics
-		(
-		PythonScriptExecutionStartTime,
-		DataDescription,
-		NSESearchPageVisitTime,
-		XBRLDocumentDownloadsStartTime,
-		XBRLDocumentDownloadsEndTime,
-		XBRLDocumentPageVisitAttemptCount,
-		XBRLDocumentDownloadErrorCount,
-		XBRLDocumentDownloadSuccessCount,
-		SQLETLStartTime,
-		RowsBulkInserted,
-		PreviouslyInsertedRowsUpdated,
-		NewRecordsInserted,
-		SQLETLFinishTime,
-		NumberOfRecordsInDestinationTableAfterExecution,
-		ErrorMessage)
-	values
-		(@PythonScriptExecutionStartTime, @DataDescription, @NSESearchPageVisitTime, @XBRLDocumentDownloadsStartTime, @XBRLDocumentDownloadsEndTime, @XBRLDocumentPageVisitAttemptCount, @XBRLDocumentDownloadErrorCount,
-		 @XBRLDocumentDownloadSuccessCount, @SQLETLStartTime, @RowsBulkInserted, @PreviouslyInsertedRowsUpdated, @NewRecordsInserted, @SQLETLFinishTime, @NumberOfRecordsInDestinationTableAfterExecution, @ErrorMessage)
-END
-
---========================================================================================================================================================================
---========================================================================================================================================================================
---========================================================================================================================================================================
-
-
---------------------------------------------------------------  dbo.SP_NSEDataCleaned
-
-
-
-create or alter procedure dbo.SP_NSEDatainsert @folder_path varchar(100)
-AS
-BEGIN
-
-	--Declare @folder_path varchar(400) = 'C:\Users\dznfa\OneDrive\Desktop\NSETrading\app\XBRLFiles\11022024092527'
+	--declare @folder_path varchar(500) = 'C:\Users\dznfa\OneDrive\Desktop\NSETrading\app\XBRLFiles\17022024150126'
 
 	/*
 		Declare variables
@@ -183,13 +13,13 @@ BEGIN
 	DECLARE @python_etl_stat_file_path NVARCHAR(max) = @folder_path + '/' + @python_etl_stat_file_name;
 	DECLARE @nse_data_bulk_file_path NVARCHAR(max) = @folder_path + '/' + @nse_data_bulk_file_name;
 
-	DECLARE @PythonScriptExecutionStartTime varchar(200);
-	DECLARE @DataDescription	varchar(200);
-	DECLARE @NSESearchPageVisitTime	varchar(200);
-	DECLARE @XBRLDocumentDownloadsStartTime	varchar(200);
-	DECLARE @XBRLDocumentDownloadsEndTime	varchar(200);
-	DECLARE @XBRLDocumentPageVisitAttemptCount	varchar(200);
-	DECLARE @XBRLDocumentDownloadErrorCount	varchar(200);
+	DECLARE @PythonScriptExecutionStartTime nvarchar(1000);
+	DECLARE @DataDescription	nvarchar(1000);
+	DECLARE @NSESearchPageVisitTime	nvarchar(1000);
+	DECLARE @XBRLDocumentDownloadsStartTime	nvarchar(1000);
+	DECLARE @XBRLDocumentDownloadsEndTime	nvarchar(1000);
+	DECLARE @XBRLDocumentPageVisitAttemptCount	nvarchar(1000);
+	DECLARE @XBRLDocumentDownloadErrorCount	nvarchar(1000);
 	DECLARE @XBRLDocumentDownloadSuccessCount int;
 
 	declare @SQLETLStartTime datetime = (Select GETDATE())
@@ -202,131 +32,135 @@ BEGIN
 
 
 	/*
-		Temporary table to hold bulk inserted data from txt file.
+		Temporary table to hold bulk inserted data from txt files.
 	*/
+
 	drop table if exists #NSEDataBulkInsert;
 	CREATE TABLE #NSEDataBulkInsert(
-		AcquisitionMode	nvarchar(200)	Null,
-		AcquisitionfromDate	nvarchar(200)	Null,
-		AcquisitionToDate	nvarchar(200)	Null,
-		AfterAcquisitionSharesNo	nvarchar(200)	Null,
-		AfterAcquisitionSharesPercentage	nvarchar(200)	Null,
-		BeforeAcquisitionSharesNo	nvarchar(200)	Null,
-		BeforeAcquisitionSharesPercentage	nvarchar(200)	Null,
-		BuyQuantity	nvarchar(200)	Null,
-		BuyValue	nvarchar(200)	Null,
-		DerivativeType	nvarchar(200)	Null,
-		Did	nvarchar(200)	Null,
-		Exchange	nvarchar(200)	Null,
-		IntimDate	nvarchar(200)	Null,
-		PID	nvarchar(200)	Null,
-		Remarks	nvarchar(200)	Null,
-		SecuritiesValue	nvarchar(200)	Null,
-		SecuritiesTypePost	nvarchar(200)	Null,
-		SellValue	nvarchar(200)	Null,
-		TDPDerivativeContractType	nvarchar(200)	Null,
-		TKDAcqm	nvarchar(200)	Null,
-		Symbol nvarchar(50) NULL,
-		CompanyName nvarchar(200) NULL,
-		Regulation varchar(20) NULL,
-		NameOfTheAcquirerORDisposer nvarchar(500) NULL,
-		TypeOfSecurity nvarchar(200) NULL,
-		NoOfSecurities int NULL,
-		AcquisitionORDisposal nvarchar(200) NULL,
-		BroadcastDateTime datetime2(7) NULL,
-		XBRLLink varchar(250) NULL,
-		Period date NULL,
-		ScripCode varchar(20) NULL,
-		NSESymbol nvarchar(200) NULL,
-		MSEISymbol nvarchar(200) NULL,
-		NameOfTheCompany nvarchar(400) NULL,
-		WhetherISINAvailable varchar(200) NULL,
-		ISINCode nvarchar(200) NULL,
-		RevisedFilling nvarchar(200) NULL,
-		DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract nvarchar(200) NULL,
-		DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTable nvarchar(200) NULL,
-		ChangeInHoldingOfSecuritiesOfPromotersAxis nvarchar(200) NULL,
-		DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems nvarchar(200) NULL,
-		TypeOfInstrumentOthers nvarchar(200) NULL,
-		TypeOfInstrument nvarchar(200) NULL,
-		CategoryOfPerson nvarchar(200) NULL,
-		NameOfThePerson nvarchar(500) NULL,
-		PANNumber nvarchar(1) NULL,
-		IdentificationNumberOfDirectorOrCompany nvarchar(200) NULL,
-		Address nvarchar(200) NULL,
-		ContactNumber nvarchar(200) NULL,
-		SecuritiesHeldPriorToAcquisitionOrDisposalAbstract nvarchar(200) NULL,
-		SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity varchar(300) NULL,
-		SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding varchar(300) NULL,
-		SecuritiesAcquiredOrDisposedAbstract nvarchar(200) NULL,
-		SecuritiesAcquiredOrDisposedNumberOfSecurity varchar(300) NULL,
-		SecuritiesAcquiredOrDisposedValueOfSecurity varchar(300) NULL,
-		SecuritiesAcquiredOrDisposedTransactionType nvarchar(200) NULL,
-		SecuritiesHeldPostAcquistionOrDisposalAbstract nvarchar(200) NULL,
-		SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity nvarchar(200) NULL,
-		SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding nvarchar(200) NULL,
-		DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract nvarchar(200) NULL,
-		DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate date NULL,
-		DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate date NULL,
-		DateOfIntimationToCompany date NULL,
-		TypeOfContract nvarchar(200) NULL,
-		ContractSpecification nvarchar(200) NULL,
-		BuyAbstract nvarchar(200) NULL,
-		BuyNotionalValue nvarchar(200) NULL,
-		BuyNumberOfUnits nvarchar(200) NULL,
-		SellAbstract nvarchar(200) NULL,
-		NotionalValue nvarchar(200) NULL,
-		NumberOfUnits varchar(200) NULL,
-		ExchangeOnWhichTheTradeWasExecuted varchar(200) NULL,
-		TotalValueInAggregate varchar(200) NULL,
-		NameOfTheSignatory nvarchar(200) NULL,
-		DesignationOfSignatory nvarchar(200) NULL,
-		Place nvarchar(200) NULL,
-		DateOfFiling nvarchar(200) NULL,
-		DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock nvarchar(200) NULL,
-		ModeOfAcquisitionOrDisposal nvarchar(200) NULL,
-		GeneralInformationAbstract nvarchar(200) NULL,
-		Currency nvarchar(200) NULL,
-		IsOrphan	varchar(10)	Not Null,
-		DownloadDate datetime NULL
+		AcquisitionMode	nvarchar(1000)	Null,
+		AcquisitionfromDate	nvarchar(1000)	Null,
+		AcquisitionToDate	nvarchar(1000)	Null,
+		AfterAcquisitionSharesNo	nvarchar(1000)	Null,
+		AfterAcquisitionSharesPercentage	nvarchar(1000)	Null,
+		BeforeAcquisitionSharesNo	nvarchar(1000)	Null,
+		BeforeAcquisitionSharesPercentage	nvarchar(1000)	Null,
+		BuyQuantity	nvarchar(1000)	Null,
+		BuyValue	nvarchar(1000)	Null,
+		DerivativeType	nvarchar(1000)	Null,
+		Did	nvarchar(1000)	Null,
+		Exchange	nvarchar(1000)	Null,
+		IntimDate	nvarchar(1000)	Null,
+		PID	nvarchar(1000)	Null,
+		Remarks	nvarchar(1000)	Null,
+		SecuritiesValue	nvarchar(1000)	Null,
+		SecuritiesTypePost	nvarchar(1000)	Null,
+		SellValue	nvarchar(1000)	Null,
+		TDPDerivativeContractType	nvarchar(1000)	Null,
+		TKDAcqm	nvarchar(1000)	Null,
+		Symbol nvarchar(1000) NULL,
+		CompanyName nvarchar(1000) NULL,
+		Regulation nvarchar(1000) NULL,
+		NameOfTheAcquirerORDisposer nvarchar(1000) NULL,
+		TypeOfSecurity nvarchar(1000) NULL,
+		NoOfSecurities nvarchar(1000) NULL,
+		AcquisitionORDisposal nvarchar(1000) NULL,
+		BroadcastDateTime datetime NULL,
+		XBRLLink nvarchar(1000) NULL,
+		Period nvarchar(1000) NULL,
+		ScripCode nvarchar(1000) NULL,
+		NSESymbol nvarchar(1000) NULL,
+		MSEISymbol nvarchar(1000) NULL,
+		NameOfTheCompany nvarchar(1000) NULL,
+		WhetherISINAvailable nvarchar(1000) NULL,
+		ISINCode nvarchar(1000) NULL,
+		RevisedFilling nvarchar(1000) NULL,
+		DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsAbstract nvarchar(1000) NULL,
+		DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTable nvarchar(1000) NULL,
+		ChangeInHoldingOfSecuritiesOfPromotersAxis nvarchar(1000) NULL,
+		DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsLineItems nvarchar(1000) NULL,
+		TypeOfInstrumentOthers nvarchar(1000) NULL,
+		TypeOfInstrument nvarchar(1000) NULL,
+		CategoryOfPerson nvarchar(1000) NULL,
+		NameOfThePerson nvarchar(1000) NULL,
+		PANNumber nvarchar(1000) NULL,
+		IdentificationNumberOfDirectorOrCompany nvarchar(1000) NULL,
+		Address nvarchar(1000) NULL,
+		ContactNumber nvarchar(1000) NULL,
+		SecuritiesHeldPriorToAcquisitionOrDisposalAbstract nvarchar(1000) NULL,
+		SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity nvarchar(1000) NULL,
+		SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding nvarchar(1000) NULL,
+		SecuritiesAcquiredOrDisposedAbstract nvarchar(1000) NULL,
+		SecuritiesAcquiredOrDisposedNumberOfSecurity nvarchar(1000) NULL,
+		SecuritiesAcquiredOrDisposedValueOfSecurity nvarchar(1000) NULL,
+		SecuritiesAcquiredOrDisposedTransactionType nvarchar(1000) NULL,
+		SecuritiesHeldPostAcquistionOrDisposalAbstract nvarchar(1000) NULL,
+		SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity nvarchar(1000) NULL,
+		SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding nvarchar(1000) NULL,
+		DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract nvarchar(1000) NULL,
+		DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate nvarchar(1000) NULL,
+		DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate nvarchar(1000) NULL,
+		DateOfIntimationToCompany nvarchar(1000) NULL,
+		TypeOfContract nvarchar(1000) NULL,
+		ContractSpecification nvarchar(1000) NULL,
+		BuyAbstract nvarchar(1000) NULL,
+		BuyNotionalValue nvarchar(1000) NULL,
+		BuyNumberOfUnits nvarchar(1000) NULL,
+		SellAbstract nvarchar(1000) NULL,
+		NotionalValue nvarchar(1000) NULL,
+		NumberOfUnits nvarchar(1000) NULL,
+		ExchangeOnWhichTheTradeWasExecuted nvarchar(1000) NULL,
+		TotalValueInAggregate nvarchar(1000) NULL,
+		NameOfTheSignatory nvarchar(1000) NULL,
+		DesignationOfSignatory nvarchar(1000) NULL,
+		Place nvarchar(1000) NULL,
+		DateOfFiling nvarchar(1000) NULL,
+		DetailsOfChangeInHoldingOfSecuritiesOfPromotersEmployeeOrDirectorOfAListedCompanyAndOtherSuchPersonsTextBlock nvarchar(1000) NULL,
+		ModeOfAcquisitionOrDisposal nvarchar(1000) NULL,
+		GeneralInformationAbstract nvarchar(1000) NULL,
+		Currency nvarchar(1000) NULL,
+		IsOrphan	varchar(10)	Null,
+		DownloadDate nvarchar(1000) NULL
 	);
 
 	drop table if exists #PythonETLStatistics
 	create table #PythonETLStatistics (
-		PythonScriptExecutionStartTime varchar(200) NOT NULL,
-		DataDescription	varchar(200)	Null,
-		NSESearchPageVisitTime	varchar(200)	Null,
-		XBRLDocumentDownloadsStartTime	varchar(200)	Null,
-		XBRLDocumentDownloadsEndTime	varchar(200)	Null,
-		XBRLDocumentPageVisitAttemptCount	varchar(200)	Null,
-		XBRLDocumentDownloadErrorCount	varchar(200)	Null,
-		XBRLDocumentDownloadSuccessCount	varchar(200)	Null
+		PythonScriptExecutionStartTime nvarchar(1000) NULL,
+		DataDescription	nvarchar(1000)	Null,
+		NSESearchPageVisitTime	nvarchar(1000)	Null,
+		XBRLDocumentDownloadsStartTime	nvarchar(1000)	Null,
+		XBRLDocumentDownloadsEndTime	nvarchar(1000)	Null,
+		XBRLDocumentPageVisitAttemptCount	nvarchar(1000)	Null,
+		XBRLDocumentDownloadErrorCount	nvarchar(1000)	Null,
+		XBRLDocumentDownloadSuccessCount	nvarchar(1000)	Null
 	);
 
 
 	/*
-		Dynamic query to run later. We concatinate bulk insert sql statement with file path.
+		Dynamic query to run later. We concatinate bulk insert sql statement with file path. It is neccessary to use dynamic query with bulk insert because we need to dynamically
+		add file path to our sql statement. Later in the code we execute this statement using exec(@sql_statement) command.
 	*/
 
-	Declare @sql_nse_data_bulk nvarchar(500) = 'bulk insert #NSEDataBulkInsert
+	Declare @sql_nse_data_bulk nvarchar(1000) = 'bulk insert #NSEDataBulkInsert
 								  from ''' +  @nse_data_bulk_file_path + '''
 								  with
 								  (
 										FORMAT = ''CSV'',
 										FIRSTROW = 2,
-										FIELDTERMINATOR = ''|'',
-										MAXERRORS = 10,
+										CODEPAGE = ''65001'',
+										FIELDTERMINATOR = ''þ'',
+										MAXERRORS = 1,
 										ROWTERMINATOR = ''\n''
 								   )'
 
-    Declare @sql_python_stats nvarchar(500) = 'bulk insert #PythonETLStatistics
+    Declare @sql_python_stats nvarchar(1000) = 'bulk insert #PythonETLStatistics
 									  from ''' +  @python_etl_stat_file_path + '''
 									  with
 									  (
 											FORMAT = ''CSV'',
 											FIRSTROW = 2,
-											FIELDTERMINATOR = ''|'',
-											MAXERRORS = 10,
+											CODEPAGE = ''65001'',
+											FIELDTERMINATOR = ''þ'',
+											MAXERRORS = 1,
 											ROWTERMINATOR = ''\n''
 									   )'
 
@@ -355,28 +189,63 @@ BEGIN TRY
 
 	/*
 		Select data from table in which we bulk inserted NSEData in previous step. The data is transformed into correct datatype to match with target table,
-		i.e. from nvarchar to date or from nvarchar to bigint.
+		i.e. from nvarchar to date or from nvarchar to decimal(19, 4).
 	*/
+
+	--select
+	--*
+	--from #NSEDataBulkInsert
+
 
 	Select
 		 AcquisitionMode
-		,cast(AcquisitionfromDate as date) AS AcquisitionfromDate
-		,cast(AcquisitionToDate as date) AS AcquisitionToDate
-		,Cast(AfterAcquisitionSharesNo as nvarchar(200)) as AfterAcquisitionSharesNo
-		,Cast(AfterAcquisitionSharesPercentage as decimal(19,2)) AS AfterAcquisitionSharesPercentage
-		,Cast(BeforeAcquisitionSharesNo as nvarchar(200)) as BeforeAcquisitionSharesNo
-		,Cast(BeforeAcquisitionSharesPercentage as decimal(19,2)) AS BeforeAcquisitionSharesPercentage
-		,Cast(BuyQuantity as bigint) as BuyQuantity
-		,Cast(BuyValue as bigint) as BuyValue
+		,case
+			when AcquisitionfromDate = '-' then Null
+			else cast(AcquisitionfromDate as date)
+		end AcquisitionfromDate
+		,case
+			when AcquisitionToDate = '-' then Null
+			else cast(AcquisitionToDate as date)
+		end AcquisitionToDate
+		,Cast(AfterAcquisitionSharesNo as nvarchar(1000)) as AfterAcquisitionSharesNo
+		, case
+			when AfterAcquisitionSharesPercentage = '-' then Null
+			else Cast(AfterAcquisitionSharesPercentage as decimal(19,2))
+		end AfterAcquisitionSharesPercentage
+		,Cast(BeforeAcquisitionSharesNo as nvarchar(1000)) as BeforeAcquisitionSharesNo
+		,case
+			when BeforeAcquisitionSharesPercentage = '-' then Null
+			else Cast(BeforeAcquisitionSharesPercentage as decimal(19,2))
+		end BeforeAcquisitionSharesPercentage
+		,case
+			when BuyQuantity = '-' then Null
+			else Cast(BuyQuantity as decimal(19, 4))
+		end BuyQuantity
+		,case
+			when BuyValue = '-' then Null
+			else Cast(BuyValue as decimal(19, 4))
+		end BuyValue
 		,DerivativeType
 		,Cast(Did as bigint) as Did
 		,Exchange
-		,cast(IntimDate as date) AS IntimDate
-		,Cast(PID as bigint) as PID
+		,case
+			when IntimDate = '-' then Null
+			else Cast(IntimDate as date)
+		end IntimDate
+		,case
+			when PID = '-' then Null
+			else Cast(PID as decimal(19, 4))
+		end PID
 		,Remarks
-		,Cast(SecuritiesValue as decimal(19,4)) AS SecuritiesValue
+		,case
+			when SecuritiesValue = '-' then Null
+			else Cast(SecuritiesValue as decimal(19, 4))
+		end SecuritiesValue
 		,SecuritiesTypePost
-		,Cast(SellValue as bigint) as SellValue
+		,case
+			when SellValue = '-' then Null
+			else Cast(SellValue as decimal(19, 4))
+		end SellValue
 		,TDPDerivativeContractType
 		,TKDAcqm
 		,Symbol
@@ -384,9 +253,16 @@ BEGIN TRY
 		,Regulation
 		,NameOfTheAcquirerORDisposer
 		,TypeOfSecurity
-		,Cast(NoOfSecurities as bigint) as NoOfSecurities
+		,case
+			when NoOfSecurities = '-' then Null
+			else Cast(NoOfSecurities as decimal(19, 4))
+		end NoOfSecurities
 		,AcquisitionORDisposal
-		,Cast(BroadcastDateTime as smalldatetime) as BroadcastDateTime
+		,CONVERT(VARCHAR, BroadcastDateTime, 103) as BroadcastDateTime
+		--,case
+		--	when BroadcastDateTime = '-' then Null
+		--	else cast(CONVERT(VARCHAR, BroadcastDateTime, 103) as datetime)
+		--end BroadcastDateTime
 		,XBRLLink
 		,Period
 		,ScripCode
@@ -409,29 +285,74 @@ BEGIN TRY
 		,Address
 		,ContactNumber
 		,SecuritiesHeldPriorToAcquisitionOrDisposalAbstract
-		,Cast(SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity as bigint) as SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity
-		,Cast(SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding as decimal(19,2)) as SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding
+		,case
+			when SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity = '-' then Null
+			else Cast(SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity as decimal(19, 4))
+		end SecuritiesHeldPriorToAcquisitionOrDisposalNumberOfSecurity
+		,case
+			when SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding = '-' then Null
+			else Cast(SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding as decimal(19, 2))
+		end SecuritiesHeldPriorToAcquisitionOrDisposalPercentageOfShareholding
 		,SecuritiesAcquiredOrDisposedAbstract
-		,Cast(SecuritiesAcquiredOrDisposedNumberOfSecurity as bigint) as SecuritiesAcquiredOrDisposedNumberOfSecurity
-		,Cast(SecuritiesAcquiredOrDisposedValueOfSecurity as decimal(19,4)) as SecuritiesAcquiredOrDisposedValueOfSecurity
+		,case
+			when SecuritiesAcquiredOrDisposedNumberOfSecurity = '-' then Null
+			else Cast(SecuritiesAcquiredOrDisposedNumberOfSecurity as decimal(19, 4))
+		end SecuritiesAcquiredOrDisposedNumberOfSecurity
+		,case
+			when SecuritiesAcquiredOrDisposedValueOfSecurity = '-' then Null
+			else Cast(SecuritiesAcquiredOrDisposedValueOfSecurity as decimal(19, 4))
+		end SecuritiesAcquiredOrDisposedValueOfSecurity
 		,SecuritiesAcquiredOrDisposedTransactionType
 		,SecuritiesHeldPostAcquistionOrDisposalAbstract
-		,cast(SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity as bigint) SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity
-		,Cast(SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding as decimal(19,2)) as SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding
-		,cast(DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract as date) as DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract
-		,cast(DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate as date) as DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate
-		,cast(DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate as date) as DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate
-		,cast(DateOfIntimationToCompany as date) as DateOfIntimationToCompany
+		,case
+			when SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity = '-' then Null
+			else Cast(SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity as decimal(19, 4))
+		end SecuritiesHeldPostAcquistionOrDisposalNumberOfSecurity
+		,case
+			when SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding = '-' then Null
+			else Cast(SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding as decimal(19, 2))
+		end SecuritiesHeldPostAcquistionOrDisposalPercentageOfShareholding
+		,case
+			when DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract = '-' then Null
+			else Cast(DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract as datetime)
+		end DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyAbstract
+		,case
+			when DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate = '-' then Null
+			else Cast(DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate as datetime)
+		end DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyFromDate
+		,case
+			when DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate = '-' then Null
+			else Cast(DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate as datetime)
+		end DateOfAllotmentAdviceOrAcquisitionOfSharesOrSaleOfSharesSpecifyToDate
+		,case
+			when DateOfIntimationToCompany = '-' then Null
+			else Cast(DateOfIntimationToCompany as datetime)
+		end DateOfIntimationToCompany
 		,TypeOfContract
 		,ContractSpecification
 		,BuyAbstract
-		,Cast(BuyNotionalValue as decimal(19, 4)) as BuyNotionalValue
-		,Cast(BuyNumberOfUnits as bigint) as BuyNumberOfUnits
+		,case
+			when BuyNotionalValue = '-' then Null
+			else Cast(BuyNotionalValue as decimal(19, 4))
+		end BuyNotionalValue
+		,case
+			when BuyNumberOfUnits = '-' then Null
+			else Cast(BuyNumberOfUnits as decimal(19, 4))
+		end BuyNumberOfUnits
 		,SellAbstract
-		,Cast(NotionalValue as decimal(19, 4)) as NotionalValue
-		,Cast(NumberOfUnits as bigint) as NumberOfUnits
+		,case
+			when NotionalValue = '-' then Null
+			else Cast(NotionalValue as decimal(19, 4))
+		end NotionalValue
+		,case
+			when NumberOfUnits = '-' then Null
+			else Cast(NumberOfUnits as decimal(19, 4))
+		end NumberOfUnits
 		,ExchangeOnWhichTheTradeWasExecuted
-		,Cast(TotalValueInAggregate as decimal(19, 4)) as TotalValueInAggregate
+		,case
+			when TotalValueInAggregate = '-' then Null
+			else Cast(TotalValueInAggregate as decimal(19, 4))
+		end TotalValueInAggregate
 		,NameOfTheSignatory
 		,DesignationOfSignatory
 		,Place
@@ -449,11 +370,10 @@ BEGIN TRY
 	-- UPDATE DATA
 
 	/*
-		Before running update statement, we want to check if new data exist in our target table with an if statement.
+		Before running update statement, we want to check if a new data exist with an if statement.
 		If it returns True then, update statement will be executed.
+		In this way, we will avoid running unneccesary update statement.
 	*/
-
-	if exists (Select count(1) from dbo.temp_update_table where Did in (Select Did from dbo.NSEDataCleaned))
 
 		Update dbo.NSEDataCleaned
 		set AcquisitionMode = temp_.AcquisitionMode,
@@ -624,25 +544,37 @@ BEGIN TRY
 				c.GeneralInformationAbstract <> temp_.GeneralInformationAbstract or
 				c.Currency <> temp_.Currency or
 				c.isorphan <> temp_.isorphan
+
 				set @PreviouslyInsertedRowsUpdated = @@ROWCOUNT
 
 
+
+
 	-- INSERT NEW DATA
+
+	/*
+		Set new inserted record count to our variable NewRecordsInserted
+	*/
+
+	set @NewRecordsInserted = (Select count(1) from dbo.temp_update_table where Did not in (Select Did from dbo.NSEDataCleaned))
 
 	/*
 		Insert newly downloaded data into our target table.
 
 		Before running an Insert statement, we first want to check with an if statement whether there is any new data comparing agaist our target table.
 		If it returns True, then insert statement will be executed.
+		In this way, we will avoid running unneccesary insert statement.
+
 
 	*/
-	set @NewRecordsInserted = (Select count(1) from dbo.temp_update_table where Did not in (Select Did from dbo.NSEDataCleaned))
-	if exists (Select count(1) from dbo.temp_update_table where Did not in (Select Did from dbo.NSEDataCleaned))
 
 		insert into dbo.NSEDataCleaned
-		Select *
-		from dbo.temp_update_table
-		where Did not in (Select Did from dbo.NSEDataCleaned);
+		Select tut.*
+		from dbo.temp_update_table tut
+		left join dbo.NSEDataCleaned nse_cleaned
+			on nse_cleaned.Did = tut.Did
+		where nse_cleaned.Did is null
+
 
 	drop table if exists dbo.temp_update_table;
 
@@ -674,7 +606,9 @@ BEGIN TRY
 END TRY
 
 
-
+/*
+	In case of an error, catch block will be executed and will store values to our statistics table.
+*/
 BEGIN CATCH
 	SELECT @ErrorMessage = ERROR_MESSAGE()
 	PRINT @ErrorMessage
@@ -687,8 +621,3 @@ BEGIN CATCH
         ROLLBACK TRANSACTION;
 END CATCH;
 end
-/*
-
-exec dbo.SP_NSEDatainsert 'C:\Users\dznfa\OneDrive\Desktop\NSETrading\app\XBRL Files\10022024103954'
-
-*/
