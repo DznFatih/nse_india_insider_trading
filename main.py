@@ -1,5 +1,4 @@
 from pipeline.extract_parameter.nse_insider_trading_extract_parameter import NSEIndiaInsiderTradingExtractParameter
-from pipeline_manager.custom_error import PossibleDBInjectionValueFound
 from pipeline_manager.entity_base.entity_base import EntityBase
 from pipeline_manager.entity_parameter.entity_parameter import EntityParameter
 from lib.lib import Path

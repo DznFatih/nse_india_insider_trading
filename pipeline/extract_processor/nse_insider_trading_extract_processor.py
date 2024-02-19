@@ -1,4 +1,4 @@
-from pipeline_manager.custom_error import PossibleDBInjectionValueFound
+from pipeline_manager.custom_error.custom_error import PossibleDBInjectionValueFound
 from pipeline_manager.entity_processor.entity_processor import EntityProcessor
 from lib.lib import datetime, timezone, Path, parser
 from pipeline_manager.get_error_details.get_error_details import get_error_details
