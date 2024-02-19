@@ -453,9 +453,9 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
 
     def __replace_invalid_value(self, dict_data: dict) -> dict:
         """
-        Replaces invalid values such as "-" with None. This transformation makes it easier to process data in SQL.
-        It first creates temporary dictionary from the dict_data passed as its argument. This is necessary because
-        we do not want to update original dictionary values. Then It compares the keys against config to find fields
+        Replaces invalid values: From '', None to '-'. Otherwise, the output file is not processes by bulk insert in
+        SQL Server. It first creates temporary dictionary from the dict_data passed as its argument. This is necessary
+        because we do not want to update original dictionary values. Then It compares the keys against config to find fields
         that need to be validated. When all fields are compared against config, it returns the new dictionary with
         updated values
         :param dict_data: Dictionary data
@@ -545,7 +545,7 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
 
     @staticmethod
     def __validate_string(string_data: str) -> str:
-        if string_data is None:
+        if string_data is None or string_data == '':
             return "-"
         return str(string_data)
 
