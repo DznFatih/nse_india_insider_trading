@@ -72,7 +72,9 @@ class NSEIndiaInsiderTradingExtractParameter(EntityParameter):
         :return: list of FileSave
         """
         return [FileSaver(data=self.__data_processor.get_cleaned_data(),
-                          file_name="NSEData.txt")]
+                          file_name="NSEData.txt"),
+                FileSaver(data=self.__data_processor.get_changed_data(),
+                          file_name="ChangedData.txt")]
 
     def get_folder_creator(self) -> FolderCreator:
         """

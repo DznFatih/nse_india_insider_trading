@@ -9,7 +9,7 @@ class MetadataSaver(MetadataSaverInterface):
         """
         Saves metadata for workflow to indicated path
         """
-        self.__file_name: str = 'metadata.txt'
+        self.__file_name: str = 'Metadata.txt'
 
     def save_metadata_to_file(self, folder_path: Path, data: dict) -> None:
         """
@@ -24,7 +24,7 @@ class MetadataSaver(MetadataSaverInterface):
                 headers = list(data.keys())
                 values = list(data.values())
                 with open(folder_path / self.__file_name, "w", encoding="utf-8") as f:
-                    delimiter = '^'
+                    delimiter = 'þ'
                     f.write(f"{delimiter}".join(headers))
                     f.write("\n")
                     f.write(f"{delimiter}".join(values))
