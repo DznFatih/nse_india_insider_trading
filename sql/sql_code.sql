@@ -176,7 +176,7 @@ BEGIN
 		Declare variables
 	*/
 
-	DECLARE @python_etl_stat_file_name NVARCHAR(max) = 'metadata.txt';
+	DECLARE @python_etl_stat_file_name NVARCHAR(max) = 'Metadata.txt';
 	DECLARE @nse_data_bulk_file_name NVARCHAR(max) = 'NSEData.txt';
 	DECLARE @python_etl_stat_file_path NVARCHAR(max) = @folder_path + '/' + @python_etl_stat_file_name;
 	DECLARE @nse_data_bulk_file_path NVARCHAR(max) = @folder_path + '/' + @nse_data_bulk_file_name;

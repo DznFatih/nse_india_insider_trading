@@ -1,4 +1,5 @@
 from pipeline.extract_parameter.nse_insider_trading_extract_parameter import NSEIndiaInsiderTradingExtractParameter
+from pipeline_manager.custom_error import PossibleDBInjectionValueFound
 from pipeline_manager.entity_base.entity_base import EntityBase
 from pipeline_manager.entity_parameter.entity_parameter import EntityParameter
 from lib.lib import Path
@@ -21,9 +22,16 @@ def entity_base_initiator(entity_parameter: EntityParameter) -> None:
 
 def log_info_to_a_file(dict_data: dict) -> None:
     """
-    Logs workflow run result (error or successful run) to log file in current working directory
-    :param dict_data: dictionary
-    :return:
+    Logs information to a file in the current working directory.
+
+    Parameters:
+    - dict_data (dict): Dictionary containing information to be logged.
+
+    Returns:
+    - None
+
+    Example:
+        log_info_to_a_file({'key': 'value'})
     """
     error_info_loc: Path = Path.cwd() / "error_info"
     if not Path.is_dir(error_info_loc):
@@ -56,7 +64,7 @@ if __name__ == "__main__":
                 the SQL script. This file is designed for reviewing original and updated values but is not intended for 
                 database loading.
                 
-            metadata.txt
+            Metadata.txt
             
                 Encompasses details regarding the Python execution, such as the start time and the count of downloaded 
                 XBRL documents. This information is loaded into the database.
@@ -72,7 +80,7 @@ if __name__ == "__main__":
     log_info: dict = {}
     try:
         # date_format -> 'DD-MM-YYYY'
-        parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date="01-01-2019", to_date="01-01-2019")
+        parameter: EntityParameter = NSEIndiaInsiderTradingExtractParameter(from_date="01-02-2024", to_date="01-02-2024")
         entity_base_initiator(entity_parameter=parameter)
         log_info = {"content": "successful"}
         log_info_to_a_file(log_info)

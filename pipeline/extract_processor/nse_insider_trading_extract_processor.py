@@ -1,3 +1,4 @@
+from pipeline_manager.custom_error import PossibleDBInjectionValueFound
 from pipeline_manager.entity_processor.entity_processor import EntityProcessor
 from lib.lib import datetime, timezone, Path, parser
 from pipeline_manager.get_error_details.get_error_details import get_error_details
@@ -37,6 +38,7 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         self.__xbrl_folder_path: Path = Path()
         self.__xbrl_document_download_start_time: str = None
         self.__xbrl_document_download_end_time: str = None
+        self.__not_safe_field_and_value: str = ""
         self.__config = {
                         "AcquisitionfromDate": self.__validate_date,
                         "AcquisitionToDate": self.__validate_date,
@@ -234,6 +236,8 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
             raise KeyError(get_error_details(e))
         except ValueError as e:
             raise ValueError(get_error_details(e))
+        except PossibleDBInjectionValueFound as e:
+            raise PossibleDBInjectionValueFound(get_error_details(e))
         except Exception as e:
             raise Exception(get_error_details(e))
 
@@ -271,6 +275,10 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
             self.__handle_xbrl_transaction_status(dict_data=item)
             original_data: dict = self.__get_data(dict_data=item)
             updated_data: dict = self.__replace_invalid_value(dict_data=original_data)
+            is_dangerous: bool = self.__is_dangerous_value(updated_data)
+            if is_dangerous:
+                raise PossibleDBInjectionValueFound(f"Possible database injection value found at "
+                                                    f"{self.__not_safe_field_and_value}")
             self.__capture_changed_data(original_data=original_data, updated_data=updated_data)
             self.__cleaned_data.append(updated_data)
         self.__set_xbrl_document_download_end_time()
@@ -496,6 +504,16 @@ class NSEIndiaInsiderTradingExtractProcessor(EntityProcessor):
         if self.__xbrl_processor.get_orphan_transaction_status():
             return "Y"
         return "N"
+
+    def __is_dangerous_value(self, dict_data: dict) -> bool:
+        validation_list = [';', '--', '/*', '*/', '%', '=']
+        for validation in validation_list:
+            for key, value in dict_data.items():
+                if validation not in value:
+                    continue
+                self.__not_safe_field_and_value = f"{key}: {value}"
+                return True
+        return False
 
     @staticmethod
     def __check_if_isin_data_available(isin_data: str) -> str:
